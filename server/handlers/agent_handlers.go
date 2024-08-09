@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"os"
@@ -325,7 +326,7 @@ func QueryLivestatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the QueryLivestatus function with the query
-	response, err := livestatus.QueryLivestatus(query)
+	response, err := livestatus.QueryLivestatus(html.EscapeString(query))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to query Livestatus: %v", err), http.StatusInternalServerError)
 		return

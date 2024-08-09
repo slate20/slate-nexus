@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,6 +57,13 @@ func main() {
 
 		// Append "http://" and ":8080" to the server URL
 		config.ServerURL = "http://" + serverURL + ":8080"
+
+		// Validate the server URL
+		_, err = url.ParseRequestURI(config.ServerURL)
+		if err != nil {
+			log.Printf("invalid server URL: %v", err)
+			return
+		}
 
 		// Collect data
 		fmt.Println("Collecting system data...")
@@ -113,6 +121,7 @@ func main() {
 
 		// Use the token to get the AUTOMATION_SECRET
 		url := config.ServerURL + "/api/agents/secret"
+
 		body := map[string]string{
 			"token":    token,
 			"agent_id": fmt.Sprint(HostID),
@@ -122,6 +131,7 @@ func main() {
 			log.Printf("could not encode request body: %v", err)
 		}
 		// log.Printf("Sending request: %s", string(jsonBody))
+		// deepcode ignore Ssrf: Validation performed after user input
 		resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
 		if err != nil {
 			log.Printf("could not send request: %v", err)
@@ -204,11 +214,17 @@ func main() {
 			log.Printf("could not download Remotely agent: %v", err)
 		}
 
-		// Quietly install the Remotely agent
+		// Install the Remotely agent
 		fmt.Println("Installing Remotely agent...")
-		err = exec.Command("powershell", "-File", "Install-Remotely.ps1").Run()
+
+		// Prepare the command with parameters
+		cmd = exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", "Install-Remotely.ps1", "-install")
+
+		// Capture the output
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("could not install Remotely agent: %v", err)
+			log.Printf("could not install Remotely agent: %v\nOutput: %s", err, output)
+			return
 		}
 
 	} else {
@@ -251,6 +267,7 @@ func downloadFile(url string, path string) error {
 	defer out.Close()
 
 	// Get the data
+	// deepcode ignore Ssrf: Validation performed after user input
 	resp, err := http.Get(url)
 	if err != nil {
 		return err

@@ -79,9 +79,11 @@ echo "Enter API token ID: "
 read REMOTELY_API_ID
 
 # Write Remotely API URL and token to the .env file
-echo "REMOTELY_API_URL=http://localhost:4000/api" >> .env
+echo "REMOTELY_API_URL=http://$HOST_IP:4000/api" >> .env
 echo "REMOTELY_API_TOKEN=$REMOTELY_API_TOKEN" >> .env
 echo "REMOTELY_API_ID=$REMOTELY_API_ID" >> .env
 
 # Make a GET request to the Remotely API to get the Remotely Windows agent
-curl -H "X-Api-Key: $REMOTELY_API_ID:$REMOTELY_API_TOKEN" -OJ -o ../agent/ "$REMOTE_API_URL/ClientDownloads/WindowsInstaller"
+source .env
+curl -H "X-Api-Key: $REMOTELY_API_ID:$REMOTELY_API_TOKEN" "$REMOTELY_API_URL/ClientDownloads/WindowsInstaller" -OJ
+mv Install-Remotely.ps1 ../agent/

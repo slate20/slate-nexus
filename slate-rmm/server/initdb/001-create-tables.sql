@@ -8,8 +8,22 @@ CREATE TABLE IF NOT EXISTS agents (
     hardware_specs JSONB,
     agent_version VARCHAR(50),
     last_seen TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_user VARCHAR(255),
-    "group" VARCHAR(255)
+    last_user VARCHAR(255)
+);
+
+-- Create the device_groups Table
+CREATE TABLE IF NOT EXISTS device_groups (
+    group_id SERIAL PRIMARY KEY,
+    group_name VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- Create the device_group_members Table
+CREATE TABLE IF NOT EXISTS device_group_members (
+    host_id INT NOT NULL,
+    group_id INT NOT NULL,
+    PRIMARY KEY (host_id, group_id),
+    FOREIGN KEY (host_id) REFERENCES agents(host_id),
+    FOREIGN KEY (group_id) REFERENCES device_groups(group_id)
 );
 
 -- Create the User Table

@@ -39,7 +39,6 @@ services:
 
   remotely:
     image: immybot/remotely:latest
-    container_name: remotely
     ports:
       - "4000:5000"
       - "4080:8080"

@@ -16,4 +16,14 @@ type Agent struct {
 	HardwareSpecs Hardware `json:"hardware_specs"`
 	AgentVersion  string   `json:"agent_version"`
 	LastSeen      string   `json:"last_seen"`
+	LastUser      string   `json:"last_user"`
+	Token         string   `json:"token"`
+	Status        string   `json:"status"`
+	Group         string   `json:"group"`
+}
+
+// Group represents a group of agents
+type Group struct {
+	GroupID   int32  `json:"group_id"`
+	GroupName string `json:"group_name"`
 }

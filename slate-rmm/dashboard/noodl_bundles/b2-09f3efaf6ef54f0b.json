@@ -1,0 +1,1 @@
+[{"name":"/Dashboard","nodes":[{"id":"b18b6c0f-d7b9-a677-a1c2-b8920194d42b","type":"Page","parameters":{"paddingBottom":{"value":0,"unit":"px"}},"ports":[],"children":[]},{"id":"86f33415-5825-eea5-972e-5d56440a709a","type":"PageInputs","parameters":{},"ports":[],"children":[]}],"connections":[],"ports":[],"roots":["b18b6c0f-d7b9-a677-a1c2-b8920194d42b"]}]

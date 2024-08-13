@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slate-Nexus</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/htmx.org@2.0.1"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">Slate-Nexus</div>
+        <ul class="nav-links">
+            <li><a href="#" hx-get="devices.html" hx-target="#main-content">Devices</a></li>
+            <li><a href="#" hx-get="settings.html" hx-target="#main-content">Settings</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="main-content">
+        <!-- Dynamic content will be inserted here using HTMX -->
+         <h1>Welcome to Slate-Nexus!</h1>
+    </div>
+</body>
+</html>

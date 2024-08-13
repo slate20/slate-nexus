@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slate-Nexus</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./Device_Page/device_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@2.0.1"></script>
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav>
-        <div class="logo">Slate-Nexus</div>
+        <div class="logo">
+            <img src="./assets/logo.png" width="64px" height="64px" alt="Company-Logo">
+        </div>
         <ul class="nav-links">
-            <li><a href="#" hx-get="devices.html" hx-target="#main-content">Devices</a></li>
+            <li><a href="#" hx-get="./Device_Page/devices.html" hx-target="#main-content">Devices</a></li>
             <li><a href="#" hx-get="settings.html" hx-target="#main-content">Settings</a></li>
         </ul>
     </nav>

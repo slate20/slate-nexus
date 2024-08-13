@@ -1,0 +1,64 @@
+<div>
+    <div class="page-layout">
+        <!-- Group List-->
+        <div class="group-list">
+            <div class="group-list-header">
+                <div class="search-group">
+                    <input type="text" placeholder="Search Groups">
+                </div>
+                <a href="#">View All</a>
+                <a href="#">Edit Groups</a>
+            </div>
+            <div class="group-items">
+                <ul>
+                    <li><a href="#">Group 1</a></li>
+                    <li><a href="#">Group 2</a></li>
+                    <li><a href="#">Group 3</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content Area-->
+         <div class="main-content">
+            <h2>Device List</h2>
+            <div class="top-buttons">
+                <button>Remote</button>
+                <button>Add To Group</button>
+                <button>Remove From Group</button>
+                <button>Run Command</button>
+                <button>Run Script</button>
+                <button class="add-agent">+ Add Agent</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select all"></th>
+                            <th>Device Name</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>IP Address</th>
+                            <th>Domain</th>
+                            <th>Operating System</th>
+                            <th>Last Connect</th>
+                            <th>Last User</th>
+                        </tr>
+                    </thead>
+                    <tbody> <!-- Body will be populated via API call -->
+                        <!-- Sample data -->
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>DESKTOP-KJH345</td>
+                            <td><span class="status online">Online</span></td>
+                            <td>Workstation</td>
+                            <td>192.168.1.10</td>
+                            <td>slatecapit.lan</td>
+                            <td>Windows 11</td>
+                            <td>8/12/2024 2:00 PM</td>
+                            <td>mvenhaus</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</div>

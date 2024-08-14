@@ -1,0 +1,17 @@
+{{ range . }}
+<tr>
+    <td><input type="checkbox"></td>
+    <td>{{ .Name }}</td>
+    <td><span class="status {{ .Status | lower }}">{{ .Status }}</span></td>
+    <td>{{ .Type }}</td>
+    <td>{{ .IPAddress }}</td>
+    <td>{{ .Domain }}</td>
+    <td>{{ .OperatingSystem }}</td>
+    <td>{{ .LastConnect }}</td>
+    <td>{{ .LastUser }}</td>
+</tr>
+{{ else }}
+<tr>
+    <td colspan="9">No devices found.</td>
+</tr>
+{{ end }}

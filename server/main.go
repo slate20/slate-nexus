@@ -13,15 +13,24 @@ func main() {
 	dsn := "host=localhost user=postgres password=slatermm dbname=RMM_db sslmode=disable"
 	database.InitDB(dsn)
 
-	// Create a new router
-	router := NewGateway()
+	// Create a new API router
+	apiRouter := NewGateway()
 
-	// Add the CORS middleware
-	corsRouter := CORSMiddleware(router)
+	// Create a new router for the HTMX gateway
+	htmxRouter := NewHTMXGateway()
+
+	// Combine the two routers
+	combinedRouter := http.NewServeMux()
+
+	// Mount the API router under a specific path
+	combinedRouter.Handle("/api/", http.StripPrefix("/api", apiRouter))
+
+	// Mount the HTMX router under a specific path
+	combinedRouter.Handle("/htmx/", http.StripPrefix("/htmx", htmxRouter))
 
 	// Start the server
 	fmt.Println("Starting server on the port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", corsRouter))
+	log.Fatal(http.ListenAndServe(":8080", CORSMiddleware(combinedRouter)))
 }
 
 func CORSMiddleware(next http.Handler) http.Handler {

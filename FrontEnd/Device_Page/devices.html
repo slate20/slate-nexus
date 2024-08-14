@@ -1,20 +1,16 @@
 <div>
     <div class="page-layout">
         <!-- Group List-->
-        <div class="group-list">
+        <div class="group-list" hx-get="/htmx/get-groups" hx-trigger="load" hx-target=".group-items">
             <div class="group-list-header">
                 <div class="search-group">
-                    <input type="text" placeholder="Search Groups">
+                    <input type="text" placeholder="Search Groups" hx-post="/search-groups" hx-trigger="keyup changed delay:500ms" hx-target=".group-items">
                 </div>
                 <a href="#">View All</a>
                 <a href="#">Edit Groups</a>
             </div>
             <div class="group-items">
-                <ul>
-                    <li><a href="#">Group 1</a></li>
-                    <li><a href="#">Group 2</a></li>
-                    <li><a href="#">Group 3</a></li>
-                </ul>
+                <!-- Group items will be inserted here using HTMX -->
             </div>
         </div>
 
@@ -29,7 +25,7 @@
                 <button>Run Script</button>
                 <button class="add-agent">+ Add Agent</button>
             </div>
-            <div class="table-container">
+            <div class="table-container" hx-get="/htmx/get-devices" hx-trigger="load" hx-target="tbody">
                 <table>
                     <thead>
                         <tr>
@@ -44,19 +40,8 @@
                             <th>Last User</th>
                         </tr>
                     </thead>
-                    <tbody> <!-- Body will be populated via API call -->
-                        <!-- Sample data -->
-                        <tr>
-                            <td><input type="checkbox"></td>
-                            <td>DESKTOP-KJH345</td>
-                            <td><span class="status online">Online</span></td>
-                            <td>Workstation</td>
-                            <td>192.168.1.10</td>
-                            <td>slatecapit.lan</td>
-                            <td>Windows 11</td>
-                            <td>8/12/2024 2:00 PM</td>
-                            <td>mvenhaus</td>
-                        </tr>
+                    <tbody> 
+                        <!-- Body will be populated via API call -->
                     </tbody>
                 </table>
             </div>

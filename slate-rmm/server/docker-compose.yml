@@ -15,8 +15,7 @@ services:
 
   nginx:
     image: nginx:latest
-    ports:
-      - "80:80"
+    network_mode: host
     volumes:
       - ../dashboard:/usr/share/nginx/html
       - ./default.conf:/etc/nginx/conf.d/default.conf

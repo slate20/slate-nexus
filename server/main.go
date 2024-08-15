@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/http"
 	"slate-rmm/database"
+	"sync"
+	"time"
 )
 
-// main is the entry point for the application
 func main() {
-	//Initialize the database connection
+	// Initialize the database connection
 	dsn := "host=localhost user=postgres password=slatermm dbname=RMM_db sslmode=disable"
 	database.InitDB(dsn)
 
@@ -19,22 +20,59 @@ func main() {
 	// Create a new router for the HTMX gateway
 	htmxRouter := NewHTMXGateway()
 
-	// Combine the two routers
-	combinedRouter := http.NewServeMux()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	// Mount the API router under a specific path
-	combinedRouter.Handle("/api/", http.StripPrefix("/api", apiRouter))
+	// Start the API server on port 8080
+	go func() {
+		defer wg.Done()
+		fmt.Println("Starting API server on port 8080...")
+		srv := &http.Server{
+			Addr:    ":8080",
+			Handler: CORSMiddleware(apiRouter),
+		}
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("API server failed: %v", err)
+		}
+	}()
 
-	// Mount the HTMX router under a specific path
-	combinedRouter.Handle("/htmx/", http.StripPrefix("/htmx", htmxRouter))
+	// Start the HTMX server on port 8081
+	go func() {
+		defer wg.Done()
+		fmt.Println("Starting HTMX server on port 8081...")
+		srv := &http.Server{
+			Addr:    ":8081",
+			Handler: CORSMiddleware(htmxRouter),
+		}
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("HTMX server failed: %v", err)
+		}
+	}()
 
-	// Start the server
-	fmt.Println("Starting server on the port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", CORSMiddleware(combinedRouter)))
+	// Wait a moment for servers to start
+	time.Sleep(time.Second)
+
+	// Check if servers are responsive
+	checkServer("http://localhost:8080")
+	checkServer("http://localhost:8081")
+
+	wg.Wait()
+}
+
+func checkServer(url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error checking %s: %v", url, err)
+		return
+	}
+	defer resp.Body.Close()
+	log.Printf("%s is responsive. Status: %s", url, resp.Status)
 }
 
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received %s request to %s", r.Method, r.URL.Path)
+
 		// Set the headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

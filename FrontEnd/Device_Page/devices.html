@@ -23,7 +23,7 @@
                 <button>Remove From Group</button>
                 <button>Run Command</button>
                 <button>Run Script</button>
-                <button class="add-agent">+ Add Agent</button>
+                <button class="add-agent" hx-get="/htmx/win-agent">+ Add Agent</button>
             </div>
             <div class="table-container" hx-get="/htmx/get-devices" hx-trigger="load" hx-target="tbody">
                 <table>

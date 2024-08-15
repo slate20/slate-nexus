@@ -1,13 +1,13 @@
 {{ range . }}
 <tr>
     <td><input type="checkbox"></td>
-    <td>{{ .Name }}</td>
-    <td><span class="status {{ .Status | lower }}">{{ .Status }}</span></td>
-    <td>{{ .Type }}</td>
+    <td>{{ .Hostname }}</td>
+    <td><span class="status online">Online</span></td>
+    <td>Workstation</td>
     <td>{{ .IPAddress }}</td>
-    <td>{{ .Domain }}</td>
-    <td>{{ .OperatingSystem }}</td>
-    <td>{{ .LastConnect }}</td>
+    <td>slatecapit.lan</td>
+    <td>{{ .OS }}</td>
+    <td>{{ .LastSeen }}</td>
     <td>{{ .LastUser }}</td>
 </tr>
 {{ else }}

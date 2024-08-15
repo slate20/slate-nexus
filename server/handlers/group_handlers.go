@@ -2,27 +2,30 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
-	"slate-rmm/models"
+	"slate-rmm/database"
 )
 
 // Handler for rendering the group items
 func GetGroups(w http.ResponseWriter, r *http.Request) {
-	// Load templates
-	templates := template.Must(template.ParseGlob(filepath.Join("server", "templates", "*.html")))
-
-	// Mock data TODO: Replace with fetched data
-	groups := []models.Group{
-		{GroupName: "Group 1"},
-		{GroupName: "Group 2"},
-		{GroupName: "Group 3"},
+	// call the GetAllGroups function from the database package
+	groups, err := database.GetAllGroups()
+	if err != nil {
+		http.Error(w, "Failed to fetch groups", http.StatusInternalServerError)
+		log.Println("Failed to fetch groups:", err)
+		return
 	}
 
+	// Load templates
+	templates := template.Must(template.ParseGlob(filepath.Join("templates", "*.html")))
+
 	// Render the template
-	err := templates.ExecuteTemplate(w, "group-items.html", groups)
+	err = templates.ExecuteTemplate(w, "group-items.html", groups)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("Template execution failed:", err)
 		return
 	}
 }

@@ -20,22 +20,6 @@ services:
       - ../dashboard:/usr/share/nginx/html
       - ./default.conf:/etc/nginx/conf.d/default.conf
 
-  checkmk:
-    image: slate-checkmk
-    command: /bin/bash -c "socat TCP-LISTEN:6557,reuseaddr,fork UNIX-CLIENT:/omd/sites/main/tmp/run/live & exec /docker-entrypoint.sh"
-    ports:
-      - "6557:6557"
-      - "5000:5000"
-      - "8000:8000"
-    environment:
-      - CMK_PASSWORD=${AUTOMATION_SECRET}
-      - CMK_SITE_ID=main
-      - AUTOMATION_SECRET=${AUTOMATION_SECRET}
-    volumes:
-      - checkmk-data:/omd/sites
-    env_file:
-      - .env
-
   remotely:
     image: immybot/remotely:latest
     ports:
@@ -53,4 +37,3 @@ services:
 
 volumes:
   postgres-data:
-  checkmk-data:

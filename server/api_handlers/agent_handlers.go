@@ -7,12 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"slate-rmm/database"
 	"slate-rmm/livestatus"
 	"slate-rmm/models"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,19 +28,6 @@ func AgentRegistration(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not load .env file", http.StatusInternalServerError)
 		return
 	}
-
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" {
-		log.Fatal("API_URL is not set in .env file")
-	}
-	siteName := os.Getenv("SITE_NAME")
-	if siteName == "" {
-		log.Fatal("SITE_NAME is not set in .env file")
-	}
-	apiUser := os.Getenv("API_USER")
-	if apiUser == "" {
-		log.Fatal("API_USER is not set in .env file")
-	}
 	apiPass := os.Getenv("AUTOMATION_SECRET")
 	if apiPass == "" {
 		log.Fatal("AUTOMATION_SECRET is not set in .env file")
@@ -59,48 +44,6 @@ func AgentRegistration(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error registering agent", http.StatusInternalServerError)
 		return
 	}
-
-	// Prepare payload for CheckMK host creation
-	payload := map[string]interface{}{
-		"folder":    "/",
-		"host_name": newAgent.Hostname,
-		"attributes": map[string]string{
-			"ipaddress": newAgent.IPAddress,
-		},
-	}
-	payloadStr, err := json.Marshal(payload)
-	if err != nil {
-		http.Error(w, "could not marshal payload", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Payload: %s\n", payloadStr)
-
-	// Create a new request
-	req, err := http.NewRequest("POST", apiURL+"/domain-types/host_config/collections/all", strings.NewReader(string(payloadStr)))
-	if err != nil {
-		http.Error(w, "error creating request", http.StatusInternalServerError)
-		return
-	}
-
-	// Set the content type to application/json
-	req.Header.Set("Content-Type", "application/json")
-	// Set the authorization header
-	req.Header.Set("Authorization", "Bearer "+apiUser+" "+apiPass)
-	// req.Header.Set
-	req.Header.Set("Accept", "application/json")
-
-	// log.Printf("Request: %v\n", req)
-
-	// Send the request
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		http.Error(w, "error sending request", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	//log.Printf("Response: %v\n", resp)
 
 	//Generate a one-time token for the agent
 	token := uuid.New().String()
@@ -120,18 +63,6 @@ func AgentRegistration(w http.ResponseWriter, r *http.Request) {
 
 	// Sleep for 5 seconds to allow host creation to complete
 	time.Sleep(5 * time.Second)
-
-	// Run the CheckMK service discovery script
-	cmd := exec.Command("./handlers/cmk_svcd.sh", newAgent.Hostname)
-	cmd.Env = append(os.Environ(), "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
-		log.Printf("cmd.Run() failed with %s\n", err)
-	}
 }
 
 // Verify agent token and return $AUTOMATION_SECRET
@@ -194,52 +125,6 @@ func VerifyAgentToken(w http.ResponseWriter, r *http.Request) {
 
 	// Log the response that was sent
 	// log.Printf("Response: %v\n", response)
-}
-
-// CheckMKServiceDiscovery runs the CheckMK service discovery script
-func CMKSvcDiscovery(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received service discovery request")
-	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		http.Error(w, "could not load .env file", http.StatusInternalServerError)
-		return
-	}
-
-	apiURL := os.Getenv("API_URL")
-	if apiURL == "" {
-		log.Fatal("API_URL is not set in .env file")
-	}
-	apiUser := os.Getenv("API_USER")
-	if apiUser == "" {
-		log.Fatal("API_USER is not set in .env file")
-	}
-	apiPass := os.Getenv("AUTOMATION_SECRET")
-	if apiPass == "" {
-		log.Fatal("AUTOMATION_SECRET is not set in .env file")
-	}
-
-	// Decode the incoming JSON to get the hostname
-	var data map[string]string
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	hostname := data["host_name"]
-
-	// Run the CheckMK service discovery script
-	log.Println("Running service discovery script")
-	cmd := exec.Command("./handlers/cmk_svcd.sh", hostname)
-	cmd.Env = append(os.Environ(), "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
-		log.Printf("cmd.Run() failed with %s\n", err)
-	}
-	log.Println("Service discovery script complete")
 }
 
 // GetAllAgents returns all the agents in the database

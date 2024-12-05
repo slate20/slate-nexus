@@ -23,12 +23,12 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	// Start the API server on port 8080
+	// Start the API server on port 8123
 	go func() {
 		defer wg.Done()
-		fmt.Println("Starting API server on port 8080...")
+		fmt.Println("Starting API server on port 8123...")
 		srv := &http.Server{
-			Addr:    ":8080",
+			Addr:    ":8123",
 			Handler: CORSMiddleware(apiRouter),
 		}
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -36,12 +36,12 @@ func main() {
 		}
 	}()
 
-	// Start the HTMX server on port 8081
+	// Start the HTMX server on port 8080
 	go func() {
 		defer wg.Done()
-		fmt.Println("Starting HTMX server on port 8081...")
+		fmt.Println("Starting HTMX server on port 8080...")
 		srv := &http.Server{
-			Addr:    ":8081",
+			Addr:    ":8080",
 			Handler: CORSMiddleware(htmxRouter),
 		}
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -53,8 +53,8 @@ func main() {
 	time.Sleep(time.Second)
 
 	// Check if servers are responsive
+	checkServer("http://localhost:8123")
 	checkServer("http://localhost:8080")
-	checkServer("http://localhost:8081")
 
 	wg.Wait()
 }

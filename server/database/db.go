@@ -37,8 +37,8 @@ func RegisterNewAgent(agent *models.Agent) error {
 
 	// Prepare for SQL Statement
 	stmt, err := db.Prepare(`
-		INSERT INTO agents (hostname, ip_address, os, os_version, hardware_specs, agent_version, last_seen, last_user)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO agents (hostname, ip_address, os, os_version, hardware_specs, agent_version, last_seen, last_user, remotely_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING host_id
 	`)
 	if err != nil {
@@ -56,6 +56,7 @@ func RegisterNewAgent(agent *models.Agent) error {
 		agent.AgentVersion,
 		time.Now(),
 		agent.LastUser,
+		agent.RemotelyID,
 	).Scan(&agent.ID)
 
 	if err != nil {
@@ -78,7 +79,7 @@ func GetAllAgents() ([]models.Agent, error) {
 	for rows.Next() {
 		var agent models.Agent
 		var hardwareSpecsRaw sql.RawBytes
-		if err := rows.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen, &agent.LastUser); err != nil {
+		if err := rows.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen, &agent.LastUser, &agent.RemotelyID); err != nil {
 			return nil, err
 		}
 
@@ -102,7 +103,7 @@ func GetAgent(id string) (*models.Agent, error) {
 	// Scan the row into an Agent struct
 	var agent models.Agent
 	var hardwareSpecsRaw []byte
-	if err := row.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen); err != nil {
+	if err := row.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen, &agent.LastUser, &agent.RemotelyID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -121,8 +122,8 @@ func GetAgent(id string) (*models.Agent, error) {
 
 // UpdateAgent updates an agent in the database
 func UpdateAgent(id string, agent *models.Agent) error {
-	_, err := db.Exec("UPDATE agents SET hostname = $1, ip_address = $2, os = $3, os_version = $4, agent_version = $5, last_seen = $6, last_user = $7 WHERE host_id = $8",
-		agent.Hostname, agent.IPAddress, agent.OS, agent.OSVersion, agent.AgentVersion, time.Now(), agent.LastUser, id)
+	_, err := db.Exec("UPDATE agents SET hostname = $1, ip_address = $2, os = $3, os_version = $4, agent_version = $5, last_seen = $6, last_user = $7, remotely_id = $8 WHERE host_id = $9",
+		agent.Hostname, agent.IPAddress, agent.OS, agent.OSVersion, agent.AgentVersion, time.Now(), agent.LastUser, agent.RemotelyID, id)
 	return err
 }
 
@@ -203,7 +204,7 @@ func GetHostsInGroup(groupID int) ([]models.Agent, error) {
 	for rows.Next() {
 		var agent models.Agent
 		var hardwareSpecsRaw sql.RawBytes
-		if err := rows.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen, &agent.LastUser); err != nil {
+		if err := rows.Scan(&agent.ID, &agent.Hostname, &agent.IPAddress, &agent.OS, &agent.OSVersion, &hardwareSpecsRaw, &agent.AgentVersion, &agent.LastSeen, &agent.LastUser, &agent.RemotelyID); err != nil {
 			if err == sql.ErrNoRows {
 				return nil, nil
 			}

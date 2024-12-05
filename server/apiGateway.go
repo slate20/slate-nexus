@@ -12,8 +12,8 @@ func NewGateway() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	// Define routes for each microservice
-	agentRoutes(router.PathPrefix("/api/agents").Subrouter())
-	groupRoutes(router.PathPrefix("/api/groups").Subrouter())
+	agentRoutes(router.PathPrefix("/agents").Subrouter())
+	groupRoutes(router.PathPrefix("/groups").Subrouter())
 
 	// Serve the agent executable
 	router.HandleFunc("/download/agent", func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,6 @@ func NewGateway() *mux.Router {
 // agentRoutes defines the routes for the agent database microservice
 func agentRoutes(router *mux.Router) {
 	router.HandleFunc("/register", api_handlers.AgentRegistration).Methods("POST")
-	router.HandleFunc("/cmksvcd", api_handlers.CMKSvcDiscovery).Methods("POST")
 	router.HandleFunc("", api_handlers.GetAllAgents).Methods("GET")
 	router.HandleFunc("/{id}", api_handlers.GetAgent).Methods("GET")
 	router.HandleFunc("/secret", api_handlers.VerifyAgentToken).Methods("POST")

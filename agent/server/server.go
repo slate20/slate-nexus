@@ -58,7 +58,7 @@ func Heartbeat(hostID int32, ServerURL string) error {
 	}
 
 	// Debug: Print the JSON data
-	fmt.Printf("Sending JSON data: %s\n", jsonData)
+	// fmt.Printf("Sending JSON data: %s\n", jsonData)
 
 	// Send a PUT request to the AgentHeartbeat endpoint
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
@@ -80,6 +80,8 @@ func Heartbeat(hostID int32, ServerURL string) error {
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %s", resp.Status)
+	} else {
+		fmt.Println("Successful Heartbeat")
 	}
 
 	return nil

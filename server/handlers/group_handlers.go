@@ -19,7 +19,7 @@ func GetGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load templates
-	templates := template.Must(template.ParseGlob(filepath.Join("templates", "*.html")))
+	templates := template.Must(template.New("").Funcs(CommonFuncMap).ParseGlob(filepath.Join("templates", "*.html")))
 
 	// Render the template
 	err = templates.ExecuteTemplate(w, "group-items.html", groups)

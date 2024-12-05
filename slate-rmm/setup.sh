@@ -26,14 +26,11 @@ cd server
 # Set permissions for the server binary
 chmod +x slatermm
 
-# Generate a random secret for Checkmk automation
+# Generate a random secret for automation
 export AUTOMATION_SECRET=$(openssl rand -base64 32)
 
 # Write API info and secret to the .env file
-echo "API_USER=cmkadmin" > .env
 echo "AUTOMATION_SECRET=$AUTOMATION_SECRET" >> .env
-echo "SITE_NAME=main" >> .env
-echo "API_URL=http://localhost:5000/main/check_mk/api/1.0" >> .env
 
 # Create a systemd service file for the server
 echo "[Unit]
@@ -53,9 +50,6 @@ WantedBy=multi-user.target" | sudo tee /etc/systemd/system/slatermm.service
 
 # Reload the systemd daemon
 sudo systemctl daemon-reload
-
-# Build Docker image
-docker build -t slate-checkmk ./server
 
 # Run Docker Services
 docker-compose up -d

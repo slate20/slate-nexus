@@ -2,12 +2,14 @@ package collectors
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"os"
-	"os/user"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slate-rmm-agent/logger"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +55,7 @@ func CollectData() (AgentData, error) {
 	// Get Remotely ID
 	remotelyID, err := getRemotelyID()
 	if err != nil {
-		log.Printf("could not get Remotely ID: %v", err) // Continue with empty Remotely ID if an error occurs
+		logger.LogError("could not get Remotely ID: %v", err) // Continue with empty Remotely ID if an error occurs
 	}
 
 	// Get current user
@@ -62,17 +64,23 @@ func CollectData() (AgentData, error) {
 		return AgentData{}, err
 	}
 
-	return AgentData{
+	agentData := AgentData{
 		Hostname:      hostname,
 		IPAddress:     hardware.IPAddress,
 		OS:            hardware.OS,
 		OSVersion:     hardware.OSVersion,
 		HardwareSpecs: hardware,
 		AgentVersion:  "1.0.0",
-		LastUser:      user,
 		LastSeen:      time.Now(),
 		RemotelyID:    remotelyID,
-	}, nil
+	}
+
+	// Only update LastUser if user is not empty
+	if user != "" {
+		agentData.LastUser = user
+	}
+
+	return agentData, nil
 }
 
 func getHardwareSpecs() (Hardware, error) {
@@ -161,12 +169,19 @@ func isDriveAccessible(path string) bool {
 }
 
 func getCurrentUser() (string, error) {
-	user, err := user.Current()
+	cmd := exec.Command("Powershell", "-Command", "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty UserName")
+	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 
-	return user.Username, nil
+	user := strings.TrimSpace(string(output))
+
+	if user == "" {
+		return "", fmt.Errorf("could not get current user")
+	}
+
+	return user, nil
 }
 
 func getRemotelyID() (string, error) {

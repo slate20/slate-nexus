@@ -2,8 +2,6 @@ package collectors
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -132,18 +130,18 @@ func getHardwareSpecs() (Hardware, error) {
 	case "windows":
 		partitions, err := disk.Partitions(false)
 		if err != nil {
-			log.Printf("Error getting disk partitions: %v", err)
+			logger.LogError("Error getting disk partitions: %v", err)
 			hardware.Storage = "Unknown"
 		}
 		var totalStorage uint64
 		for _, partition := range partitions {
 			if !isDriveAccessible(partition.Mountpoint) {
-				log.Printf("Skipping inaccessible drive: %s", partition.Mountpoint)
+				logger.LogWarn("Skipping inaccessible drive: %s", partition.Mountpoint)
 				continue
 			}
 			usage, err := disk.Usage(partition.Mountpoint)
 			if err != nil {
-				log.Printf("could not get disk usage for %s: %v", partition.Mountpoint, err)
+				logger.LogError("could not get disk usage for %s: %v", partition.Mountpoint, err)
 				continue
 			}
 			totalStorage += usage.Total
@@ -175,13 +173,7 @@ func getCurrentUser() (string, error) {
 		return "", err
 	}
 
-	user := strings.TrimSpace(string(output))
-
-	if user == "" {
-		return "", fmt.Errorf("could not get current user")
-	}
-
-	return user, nil
+	return strings.TrimSpace(string(output)), nil
 }
 
 func getRemotelyID() (string, error) {

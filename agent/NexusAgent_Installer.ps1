@@ -48,7 +48,9 @@ $config = @{
     "server_url" = $serverUrl
     "host_id" = 0
 }
-$config | ConvertTo-Json | Out-File "config.json"
+
+# Convert to JSON and save to file using UTF-8
+$config | ConvertTo-Json | Out-File "config.json" -Encoding utf8
 
 # Function to install the Slate-RMM agent
 function Install-SlateRMMAgent {

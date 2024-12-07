@@ -82,6 +82,22 @@ func runAgent(stop <-chan struct{}) {
 		return
 	}
 
+	// If HostID is 0, run agentSetup and reload config
+	if config.HostID == 0 {
+		configFile := "C:\\Program Files\\SlateNexus\\config.json"
+		err = agentSetup(config, configFile)
+		if err != nil {
+			logger.LogError("could not setup agent: %v", err)
+			return
+		}
+		// Reload config after setup
+		config, err = loadConfig()
+		if err != nil {
+			logger.LogError("could not reload config after setup: %v", err)
+			return
+		}
+	}
+
 	// Send a heartbeat every minute
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -114,7 +130,7 @@ func loadConfig() (Config, error) {
 		return config, err
 	}
 
-	// Remove BOM if present
+	// Remove BOM
 	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 
 	// Unmarshal the config file
@@ -214,42 +230,3 @@ func downloadFile(url string, path string) error {
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
-
-// func installRemotely(config Config) error {
-// 	// Download the Remotely Windows installer if Remotely is not installed
-
-// 	//Check if "C:\Program Files\Remotely\Remotely_Agent.exe" exists
-// 	_, err := os.Stat("C:\\Program Files\\Remotely\\Remotely_Agent.exe")
-// 	if err == nil {
-// 		logger.LogInfo("Remotely is already installed")
-// 	} else {
-// 		logger.LogInfo("Downloading Remotely agent...")
-// 		err = downloadFile(config.ServerURL+"/api/download/remotely-win", "Install-Remotely.ps1")
-// 		if err != nil {
-// 			logger.LogError("could not download Remotely agent: %v", err)
-// 		}
-
-// 		// Wait for 10 seconds
-// 		time.Sleep(10 * time.Second)
-
-// 		// Move the Remotely installer from Windows/System32 to C:\Program Files\SlateNexus\Remotely\
-// 		logger.LogInfo("Moving Remotely agent...")
-// 		err = os.Rename("C:\\Windows\\System32\\Install-Remotely.ps1", "C:\\Program Files\\SlateNexus\\Remotely\\Install-Remotely.ps1")
-// 		if err != nil {
-// 			logger.LogError("could not move Remotely agent: %v", err)
-// 		}
-
-// 		// Install the Remotely agent
-// 		logger.LogInfo("Installing Remotely agent...")
-
-// 		// Prepare the command with parameters
-// 		cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\SlateNexus\\Remotely\\Install-Remotely.ps1", "-install")
-
-// 		// Capture the output
-// 		output, err := cmd.CombinedOutput()
-// 		if err != nil {
-// 			logger.LogError("could not install Remotely agent: %v\nOutput: %s", err, output)
-// 		}
-// 	}
-// 	return nil
-// }

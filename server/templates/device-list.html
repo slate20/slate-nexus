@@ -26,7 +26,7 @@
         if (event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
             var response = JSON.parse(event.detail.xhr.responseText);
             if (response.url) {
-                window.open(response.url, '_blank');
+                window.open(response.url, '_blank', 'width=1600,height=900');
             } else {
                 alert('Failed to open remote control.');
             }

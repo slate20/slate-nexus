@@ -7,14 +7,42 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"slate-rmm-agent/collectors"
+	"slate-rmm-agent/logger"
 	"slate-rmm-agent/server"
 	"time"
+
+	"golang.org/x/sys/windows/svc"
 )
+
+type Service struct{}
+
+func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
+	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
+	changes <- svc.Status{State: svc.StartPending}
+	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
+
+	stop := make(chan struct{})
+
+	go runAgent(stop)
+
+	for {
+		select {
+		case c := <-r:
+			switch c.Cmd {
+			case svc.Interrogate:
+				changes <- c.CurrentStatus
+			case svc.Stop, svc.Shutdown:
+				close(stop)
+				changes <- svc.Status{State: svc.StopPending}
+				return
+			default:
+				log.Printf("unexpected control request: #%d", c)
+			}
+		}
+	}
+}
 
 // Config represents the configuration for the agent
 type Config struct {
@@ -23,40 +51,50 @@ type Config struct {
 }
 
 func main() {
+	err := logger.SetupLogger()
+	if err != nil {
+		log.Fatalf("could not setup logger: %v", err)
+	}
+	defer logger.LogFile.Close()
+
+	logger.LogInfo("Starting SlateNexusAgent...")
+
+	// Run as a service
+	err = svc.Run("SlateRMMAgent", &Service{})
+	if err != nil {
+		logger.LogError("Service failed: %v", err)
+	}
+}
+
+func runAgent(stop <-chan struct{}) {
 	// Add a defer statement to recover from panics
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("recovered from panic: %v", r)
+			logger.LogError("recovered from panic: %v", r)
 		}
 	}()
 
-	var config Config
-	var err error
+	logger.LogInfo("Agent starting...")
 
-	//Get the directory of the executable
-	exe, err := os.Executable()
+	config, err := loadConfig()
 	if err != nil {
-		log.Printf("could not get the directory of the executable: %v", err)
+		logger.LogError("could not load config: %v", err)
+		return
 	}
-	dir := filepath.Dir(exe)
 
-	// Define the path to the config file
-	configPath := filepath.Join(dir, "config.json")
-
-	// Check if the config file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		// If the config file does not exist, setup the agent
-		agentSetup(config, configPath)
-	} else {
-		// If the config file exists, read the config from the file
-		configBytes, err := os.ReadFile(configPath)
+	// If HostID is 0, run agentSetup and reload config
+	if config.HostID == 0 {
+		configFile := "C:\\Program Files\\SlateNexus\\config.json"
+		err = agentSetup(config, configFile)
 		if err != nil {
-			log.Printf("could not read config file: %v", err)
+			logger.LogError("could not setup agent: %v", err)
+			return
 		}
-
-		err = json.Unmarshal(configBytes, &config)
+		// Reload config after setup
+		config, err = loadConfig()
 		if err != nil {
-			log.Printf("could not unmarshal config: %v", err)
+			logger.LogError("could not reload config after setup: %v", err)
+			return
 		}
 	}
 
@@ -64,54 +102,63 @@ func main() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		if err := server.Heartbeat(config.HostID, config.ServerURL); err != nil {
-			log.Printf("host id: %d, server url: %s", config.HostID, config.ServerURL)
-			log.Printf("could not send heartbeat: %v", err)
+	for {
+		select {
+		case <-ticker.C:
+			if err := server.Heartbeat(config.HostID, config.ServerURL); err != nil {
+				logger.LogError("could not send heartbeat: %v", err)
+			} else {
+				logger.LogInfo("Heartbeat sent successfully")
+			}
+		case <-stop:
+			logger.LogInfo("Agent stopping...")
+			return
 		}
 	}
-
 }
 
-func agentSetup(config Config, configPath string) {
-	// Prompt the user for the server URL
-	fmt.Print("Enter the server IP or Hostname (If DNS is configured): ")
-	var serverURL string
-	_, err := fmt.Scan(&serverURL)
+func loadConfig() (Config, error) {
+	var config Config
+
+	// Define the path to the config file
+	configFile := "C:\\Program Files\\SlateNexus\\config.json"
+
+	// Read the config file
+	data, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Printf("could not read server IP/Hostname: %v", err)
+		logger.LogError("could not read config file: %v", err)
+		return config, err
 	}
 
-	// Append "http://" to the server URL
-	config.ServerURL = "http://" + serverURL
+	// Remove BOM
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 
-	// Validate the server URL
-	_, err = url.ParseRequestURI(config.ServerURL)
+	// Unmarshal the config file
+	err = json.Unmarshal(data, &config)
 	if err != nil {
-		log.Printf("invalid server URL: %v", err)
-		return
+		logger.LogError("could not unmarshal config file: %v", err)
 	}
 
-	// Install Remotely agent
-	err = installRemotely(config)
-	if err != nil {
-		log.Printf("could not install Remotely agent: %v", err)
-	}
+	return config, nil
+}
+
+func agentSetup(config Config, configPath string) error {
 
 	// Collect data
 	fmt.Println("Collecting system data...")
 	data, err := collectors.CollectData()
 	if err != nil {
-		log.Printf("could not collect data: %v", err)
+		logger.LogError("could not collect data: %v", err)
+		return err
 	}
 
 	// Register the agent and get the token for AUTOMATION_SECRET
 	fmt.Println("Registering agent...")
 	HostID, token, err := server.Register(data, config.ServerURL)
 	if err != nil {
-		log.Printf("could not register with the server: %v", err)
+		logger.LogError("could not register with the server: %v", err)
 	} else {
-		fmt.Printf("Registered with the server with HostID: %d\n", HostID)
+		logger.LogInfo("Registered with the server with HostID: %d\n", HostID)
 	}
 
 	// Save the HostID in the config
@@ -120,12 +167,12 @@ func agentSetup(config Config, configPath string) {
 	// Save the config in the config file
 	configBytes, err := json.Marshal(config)
 	if err != nil {
-		log.Printf("could not marshal config: %v", err)
+		logger.LogError("could not marshal config: %v", err)
 	}
 
 	err = os.WriteFile(configPath, configBytes, 0644)
 	if err != nil {
-		log.Printf("could not write config file: %v", err)
+		logger.LogError("could not write config file: %v", err)
 	}
 
 	// Use the token to get the AUTOMATION_SECRET
@@ -137,13 +184,13 @@ func agentSetup(config Config, configPath string) {
 	}
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("could not encode request body: %v", err)
+		logger.LogError("could not encode request body: %v", err)
 	}
 	// log.Printf("Sending request: %s", string(jsonBody))
 	// deepcode ignore Ssrf: Validation performed after user input
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Printf("could not send request: %v", err)
+		logger.LogError("could not send request: %v", err)
 	} else {
 		defer resp.Body.Close()
 	}
@@ -153,12 +200,13 @@ func agentSetup(config Config, configPath string) {
 		Secret string `json:"secret"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("could not decode response: %v", err)
+		logger.LogError("could not decode response: %v", err)
 	}
 
 	// Delete the AUTOMATION_SECRET
 	result.Secret = ""
 
+	return nil
 }
 
 // downloadFile downloads a file from the given URL and saves it to the given path
@@ -181,33 +229,4 @@ func downloadFile(url string, path string) error {
 	// Write the data to the file
 	_, err = io.Copy(out, resp.Body)
 	return err
-}
-
-func installRemotely(config Config) error {
-	// Download the Remotely Windows installer if Remotely is not installed
-
-	//Check if "C:\Program Files\Remotely\Remotely_Agent.exe" exists
-	_, err := os.Stat("C:\\Program Files\\Remotely\\Remotely_Agent.exe")
-	if err == nil {
-		fmt.Println("Remotely is already installed")
-	} else {
-		fmt.Println("Downloading Remotely agent...")
-		err = downloadFile(config.ServerURL+"/api/download/remotely-win", "Install-Remotely.ps1")
-		if err != nil {
-			log.Printf("could not download Remotely agent: %v", err)
-		}
-
-		// Install the Remotely agent
-		fmt.Println("Installing Remotely agent...")
-
-		// Prepare the command with parameters
-		cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", "Install-Remotely.ps1", "-install")
-
-		// Capture the output
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("could not install Remotely agent: %v\nOutput: %s", err, output)
-		}
-	}
-	return nil
 }

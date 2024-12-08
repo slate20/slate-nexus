@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: RMM_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+      - postgres-data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    network_mode: host
+    volumes:
+      - ../dashboard:/usr/share/nginx/html
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+
+  remotely:
+    image: immybot/remotely:latest
+    ports:
+      - "4000:5000"
+      - "4080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=5000
+      - Remotely_ApplicationOptions__DbProvider=SQLite
+      - Remotely_ConnectionStrings__SQLite=Data Source=/app/AppData/Remotely.db
+      - Remotely_ConnectionStrings__SQLServer=Server=(localdb)\\mssqllocaldb;Database=Remotely-Server-53bc9b9d-9d6a-45d4-8429-2a2761773502;Trusted_Connection=True;MultipleActiveResultSets=true
+      - Remotely_ConnectionStrings__PostgreSQL=Server=Host=localhost;Database=Remotely;Username=postgres;
+    volumes:
+      - /var/www/remotely:/app/AppData
+
+volumes:
+  postgres-data:

@@ -17,6 +17,7 @@
         </div>
         <ul class="nav-links">
             <li><a href="#" hx-get="./Device_Page/devices.html" hx-target="#main-content">Devices</a></li>
+            <li><a id="remotelyLink" href="/" target="_blank">Remotely</a></li>
             <li><a href="#" hx-get="settings.html" hx-target="#main-content">Settings</a></li>
         </ul>
     </nav>
@@ -27,4 +28,11 @@
          <h1>Welcome to Slate-Nexus!</h1>
     </div>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var remotelyLink = document.getElementById('remotelyLink');
+        var currentHost = window.location.hostname;
+        remotelyLink.href = 'http://' + currentHost + ':4000';
+    });
+</script>
 </html>

@@ -2,14 +2,63 @@
 
 # This script is used to set up the environment for the application.
 
-# Create /var/run/checkmk directory
-sudo mkdir -p /var/run/checkmk
-
-# Create /var/www/remotely directory
+# Create needed directories if they don't exist
 sudo mkdir -p /var/www/remotely
+sudo mkdir -p /etc/ssl/Nexus
 
 # Update the apt package list
 sudo apt update && sudo apt upgrade -y
+
+# Get all host IP addresses
+IP_ADDRESSES=$(hostname -I | xargs -n1 | sed 's/^/IP:/g' | paste -sd,)
+
+# Check if cert.pem and key.pem are already present
+if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
+    # Prompt user to choose between using Let's Encrypt (certbot), self-signed certificate, or no certificate
+    echo "Which method would you like to use for SSL certificates?"
+    echo "1. Let's Encrypt (must have a valid FQDN)"
+    echo "2. Self-signed certificate"
+    echo "3. I've placed my own certificate in /etc/ssl/Nexus"
+    echo "4. No certificate"
+    read -p "Enter your choice (1/2/3): " choice
+
+    if [ "$choice" = "1" ]; then
+        # Install certbot
+        sudo apt install -y certbot python3-certbot-nginx
+
+        # Prompt user for FQDN
+        read -p "Enter your FQDN: " fqdn
+
+        # Generate Let's Encrypt certificate
+        sudo certbot --nginx -d $fqdn
+
+        # Copy the certificate and key to the appropriate location
+        sudo cp /etc/letsencrypt/live/$fqdn/fullchain.pem /etc/ssl/Nexus/cert.pem
+        sudo cp /etc/letsencrypt/live/$fqdn/privkey.pem /etc/ssl/Nexus/key.pem
+
+        echo "Certificate setup complete."
+
+    elif [ "$choice" = "2" ]; then
+        # Generate self-signed certificate
+        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -subj "/C=US/ST=Texas/L=Dallas/O=SlateNexus" -addext "subjectAltName=IP:${HOST_IP}"
+
+        echo "Certificate setup complete."
+
+    elif [ "$choice" = "3" ]; then
+        echo "Certificates must be named cert.pem and key.pem. Please rename your certificates and then re-run this setup."
+        exit 1
+
+    elif [ "$choice" = "4" ]; then
+        echo "No certificate will be used."
+    else
+        # If invalid choice, re-prompt user
+        echo "Invalid choice. Please enter 1, 2, or 3."
+        exit 1
+    fi
+# If .pem files exist but are named incorrectly
+else
+    echo "Certificates already exist. Skipping certificate setup."
+fi
 
 # Install Docker
 sudo apt install -y docker.io

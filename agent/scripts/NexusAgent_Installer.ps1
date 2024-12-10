@@ -29,26 +29,6 @@ Copy-Item ".\slate-rmm-agent.exe" -Destination "$installPath\slate-rmm-agent.exe
 # move to the new directory
 Set-Location $installPath
 
-# Check whether the server is using a self-signed certificate or not
-try {
-    $response = [Net.HttpWebRequest]::Create($serverUrl)
-    $response.AllowAutoRedirect = $false
-    $response.Timeout = 5000
-    $response.GetResponse() | Out-Null
-} catch {}
-
-$certificate = $response.ServicePoint.Certificate
-
-if ($certificate) {
-    if ($certificate.Subject -eq $certificate.Issuer) {
-        Write-Output "Server certificate is self-signed."
-    } else {
-        Write-Output "Server certificate is not self-signed."
-    }
-} else {
-    Write-Output "Unable to retrieve server certificate."
-}
-
 # Check if server certificate is self-signed
 $response = [Net.HttpWebRequest]::Create($serverUrl)
 $response.AllowAutoRedirect = $false

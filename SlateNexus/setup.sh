@@ -40,7 +40,7 @@ if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
 
     elif [ "$choice" = "2" ]; then
         # Generate self-signed certificate
-        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -subj "/C=US/ST=Texas/L=Dallas/O=SlateNexus" -addext "subjectAltName=IP:${HOST_IP}"
+        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -addext "subjectAltName=IP:${HOST_IP}"
 
         echo "Certificate setup complete."
 

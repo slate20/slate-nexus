@@ -50,7 +50,7 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	apiID := os.Getenv("REMOTELY_API_ID")
 
 	// get the RemotelyID using the host ID from the end of request URL
-	hostID := strings.TrimPrefix(r.URL.Path, "/remoterequest/")
+	hostID := strings.TrimPrefix(r.URL.Path, "/htmx/remoterequest/")
 
 	if hostID == "" {
 		http.Error(w, "missing host ID", http.StatusBadRequest)
@@ -83,6 +83,7 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Do(req)
 	if err != nil {
 		http.Error(w, "could not send request", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()

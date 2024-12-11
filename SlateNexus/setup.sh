@@ -28,7 +28,7 @@ if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
 
         # Prompt user for FQDN
         read -p "Enter your FQDN: " fqdn
-
+ 
         # Generate Let's Encrypt certificate
         sudo certbot --nginx -d $fqdn
 
@@ -40,7 +40,7 @@ if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
 
     elif [ "$choice" = "2" ]; then
         # Generate self-signed certificate
-        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -addext "subjectAltName=IP:${HOST_IP}"
+        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -addext "subjectAltName=${IP_ADDRESSES}"
 
         echo "Certificate setup complete."
 

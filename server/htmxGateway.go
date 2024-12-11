@@ -11,9 +11,9 @@ func NewHTMXGateway() *http.ServeMux {
 
 	// HTMX routes
 	router.HandleFunc("/", handlers.IndexHandler)
-	router.HandleFunc("/get-devices", handlers.GetDevices)
-	router.HandleFunc("/get-groups", handlers.GetGroups)
-	router.HandleFunc("/remoterequest/{id}", handlers.GetRemoteControlURL)
+	router.HandleFunc("/htmx/get-devices", handlers.GetDevices)
+	router.HandleFunc("/htmx/get-groups", handlers.GetGroups)
+	router.HandleFunc("/htmx/remoterequest/{id}", handlers.GetRemoteControlURL)
 
 	return router
 }

@@ -9,55 +9,21 @@ sudo mkdir -p /etc/ssl/Nexus
 # Update the apt package list
 sudo apt update && sudo apt upgrade -y
 
-# Get all host IP addresses
-IP_ADDRESSES=$(hostname -I | xargs -n1 | sed 's/^/IP:/g' | paste -sd,)
+# Prompt for server FQDN
+read -p "Enter your FQDN for this server (e.g., nexus.example.com): " fqdn
+
+# Get the server IP address
+host_ip=$(hostname -I | awk '{print $1}')
+
+# Write domain info to the .env file
+echo "NEXUS_IP=$host_ip" >> .env
+echo "NEXUS_FQDN=$fqdn" >> .env
+echo "REMOTELY_FQDN=remotely.$fqdn" >> .env
 
 # Check if cert.pem and key.pem are already present
 if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
-    # Prompt user to choose between using Let's Encrypt (certbot), self-signed certificate, or no certificate
-    echo "Which method would you like to use for SSL certificates?"
-    echo "1. Let's Encrypt (must have a valid FQDN)"
-    echo "2. Self-signed certificate"
-    echo "3. I've placed my own certificate in /etc/ssl/Nexus"
-    echo "4. No certificate"
-    read -p "Enter your choice (1/2/3): " choice
-
-    if [ "$choice" = "1" ]; then
-        # Install certbot
-        sudo apt install -y certbot python3-certbot-nginx
-
-        # Prompt user for FQDN
-        read -p "Enter your FQDN: " fqdn
- 
-        # Generate Let's Encrypt certificate
-        sudo certbot --nginx -d $fqdn
-
-        # Copy the certificate and key to the appropriate location
-        sudo cp /etc/letsencrypt/live/$fqdn/fullchain.pem /etc/ssl/Nexus/cert.pem
-        sudo cp /etc/letsencrypt/live/$fqdn/privkey.pem /etc/ssl/Nexus/key.pem
-
-        echo "Certificate setup complete."
-
-    elif [ "$choice" = "2" ]; then
-        # Generate self-signed certificate
-        openssl req -x509 -newkey rsa:4096 -days 365 -nodes -out /etc/ssl/Nexus/cert.pem -keyout /etc/ssl/Nexus/key.pem -addext "subjectAltName=${IP_ADDRESSES}"
-
-        echo "Certificate setup complete."
-
-    elif [ "$choice" = "3" ]; then
-        echo "Certificates must be named cert.pem and key.pem. Please rename your certificates and then re-run this setup."
-        exit 1
-
-    elif [ "$choice" = "4" ]; then
-        echo "No certificate will be used."
-    else
-        # If invalid choice, re-prompt user
-        echo "Invalid choice. Please enter 1, 2, or 3."
-        exit 1
-    fi
-# If .pem files exist but are named incorrectly
-else
-    echo "Certificates already exist. Skipping certificate setup."
+    echo "Please run the generate_ssl.sh script or add your existing certificate and key to /etc/ssl/Nexus/. Re run this script once complete."
+    exit 1
 fi
 
 # Install Docker
@@ -111,11 +77,8 @@ sudo systemctl start slatermm
 # Enable the server to start on boot
 sudo systemctl enable slatermm
 
-# Get the IP address of the server
-HOST_IP=$(hostname -I | awk '{print $1}')
-
 # Inform the user of Remotely url
-echo "Remotely is now available at http://$HOST_IP:4000"
+echo "Remotely is now available at ${REMOTELY_FQDN}"
 
 # Prompt for Remotely API token
 echo "Enter API token secret created in Remotely: "
@@ -124,7 +87,7 @@ echo "Enter API token ID: "
 read REMOTELY_API_ID
 
 # Write Remotely API URL and token to the .env file
-echo "REMOTELY_API_URL=http://$HOST_IP:4000/api" >> .env
+echo "REMOTELY_API_URL= https://$REMOTELY_FQDN/api" >> .env
 echo "REMOTELY_API_TOKEN=$REMOTELY_API_TOKEN" >> .env
 echo "REMOTELY_API_ID=$REMOTELY_API_ID" >> .env
 

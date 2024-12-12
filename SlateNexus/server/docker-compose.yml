@@ -20,11 +20,17 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "5000:5000"
+    #  - "5000:5000"
     volumes:
       - ../dashboard:/usr/share/nginx/html
-      - ./default.conf:/etc/nginx/conf.d/default.conf
+    # - ./default.conf:/etc/nginx/conf.d/default.conf
+      - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - /etc/ssl/Nexus:/etc/ssl/Nexus
+    environment:
+      - NEXUS_IP=${NEXUS_IP:-172.17.0.1}
+      - NEXUS_FQDN=${NEXUS_FQDN:-_}
+      - REMOTELY_FQDN=${REMOTELY_FQDN:-remotely.$NEXUS_FQDN}
+    command: /bin/bash -c "envsubst '$${NEXUS_FQDN} $${REMOTELY_FQDN}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"slate-rmm/database"
 	"sync"
@@ -71,7 +72,24 @@ func checkServer(url string) {
 
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received %s request to %s", r.Method, r.URL.Path)
+		// DEBUG: Print the request headers
+		// for key, value := range r.Header {
+		// 	fmt.Printf("%s: %s\n", key, value)
+		// }
+
+		//Only allow requests from the Nginx Container
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+
+		if err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+		if ip != "172.20.0.100" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		log.Printf("Received %s request to %s from %s", r.Method, r.URL.Path, ip)
 
 		// Set the headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")

@@ -6,7 +6,8 @@ services:
       POSTGRES_DB: RMM_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
+    networks:
+      - nexus_network
     ports:
       - "5432:5432"
     volumes:
@@ -16,7 +17,8 @@ services:
   nginx:
     image: nginx:latest
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 172.20.0.100
     ports:
       - "80:80"
       - "443:443"
@@ -56,3 +58,6 @@ volumes:
 networks:
   nexus_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

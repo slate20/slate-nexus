@@ -62,9 +62,9 @@ func AgentRegistration(w http.ResponseWriter, r *http.Request) {
 	time.Sleep(5 * time.Second)
 }
 
-// Verify agent token and return $AUTOMATION_SECRET
+// Verify agent token and return $API_SECRET
 func VerifyAgentToken(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received token for automation secret request")
+	log.Println("Received token for API secret request")
 	// Decode the incoming JSON to get the token and agent ID
 	var data map[string]string
 	err := json.NewDecoder(r.Body).Decode(&data)
@@ -101,18 +101,18 @@ func VerifyAgentToken(w http.ResponseWriter, r *http.Request) {
 	// Delete the token from the agentTokens map
 	delete(agentTokens, agentID)
 
-	// If the token is valid, respond with the AUTOMATION_SECRET
-	automationSecret := os.Getenv("AUTOMATION_SECRET")
-	if automationSecret == "" {
-		log.Println("AUTOMATION_SECRET not set")
-		http.Error(w, "AUTOMATION_SECRET not set", http.StatusInternalServerError)
+	// If the token is valid, respond with the API_KEY
+	apiKey := os.Getenv("API_KEY")
+	if apiKey == "" {
+		log.Println("API_KEY not set")
+		http.Error(w, "API_KEY not set", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with the AUTOMATION_SECRET
+	// Respond with the API_KEY
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := map[string]string{"secret": automationSecret}
+	response := map[string]string{"key": apiKey}
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		log.Printf("could not encode response: %v\n", err)

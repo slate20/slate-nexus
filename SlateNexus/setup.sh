@@ -41,13 +41,16 @@ cd server
 # Set permissions for the server binary
 chmod +x slatermm
 
-# Generate a random secret for automation and for postgres
-export AUTOMATION_SECRET=$(openssl rand -base64 32)
+# Generate a random secret for API and for postgres
+export API_KEY =$(openssl rand -base64 32)
 export POSTGRES_PASSWORD=$(openssl rand -base64 32)
 
 # Write API info and secret to the .env file
-echo "AUTOMATION_SECRET=$AUTOMATION_SECRET" >> .env
+echo "API_KEY=$API_KEY" >> .env
 echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
+
+# Create the agent installer scripts
+./create_installers.sh "$API_KEY"
 
 # Create a systemd service file for the server
 echo "[Unit]

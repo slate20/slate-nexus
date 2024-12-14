@@ -48,6 +48,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 type Config struct {
 	ServerURL string `json:"server_url"`
 	HostID    int32  `json:"host_id"`
+	APIKey    string `json:"api_key"`
 }
 
 func main() {
@@ -60,7 +61,7 @@ func main() {
 	logger.LogInfo("Starting SlateNexusAgent...")
 
 	// Run as a service
-	err = svc.Run("SlateRMMAgent", &Service{})
+	err = svc.Run("SlateNexusAgent", &Service{})
 	if err != nil {
 		logger.LogError("Service failed: %v", err)
 	}
@@ -105,7 +106,7 @@ func runAgent(stop <-chan struct{}) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := server.Heartbeat(config.HostID, config.ServerURL); err != nil {
+			if err := server.Heartbeat(config.HostID, config.ServerURL, config.APIKey); err != nil {
 				logger.LogError("could not send heartbeat: %v", err)
 			} else {
 				logger.LogInfo("Heartbeat sent successfully")
@@ -154,7 +155,7 @@ func agentSetup(config Config, configPath string) error {
 
 	// Register the agent and get the token for AUTOMATION_SECRET
 	fmt.Println("Registering agent...")
-	HostID, token, err := server.Register(data, config.ServerURL)
+	HostID, err := server.Register(data, config.ServerURL, config.APIKey)
 	if err != nil {
 		logger.LogError("could not register with the server: %v", err)
 	} else {
@@ -174,37 +175,6 @@ func agentSetup(config Config, configPath string) error {
 	if err != nil {
 		logger.LogError("could not write config file: %v", err)
 	}
-
-	// Use the token to get the AUTOMATION_SECRET
-	url := config.ServerURL + "/api/agents/secret"
-
-	body := map[string]string{
-		"token":    token,
-		"agent_id": fmt.Sprint(HostID),
-	}
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		logger.LogError("could not encode request body: %v", err)
-	}
-	// log.Printf("Sending request: %s", string(jsonBody))
-	// deepcode ignore Ssrf: Validation performed after user input
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
-	if err != nil {
-		logger.LogError("could not send request: %v", err)
-	} else {
-		defer resp.Body.Close()
-	}
-
-	// Decode the response to get the AUTOMATION_SECRET
-	var result struct {
-		Secret string `json:"secret"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		logger.LogError("could not decode response: %v", err)
-	}
-
-	// Delete the AUTOMATION_SECRET
-	result.Secret = ""
 
 	return nil
 }

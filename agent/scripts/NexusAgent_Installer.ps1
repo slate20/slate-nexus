@@ -12,7 +12,7 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 Set-Location $PSScriptRoot
 
 # Prompt for server IP and append "https://"
-Write-Host "Enter the server IP or Hostname (if DNS is configured): "
+Write-Host "Enter the server FQDN: "
 $serverUrl = Read-Host
 $serverUrl = "https://" + $serverUrl
 
@@ -28,37 +28,6 @@ Copy-Item ".\slate-rmm-agent.exe" -Destination "$installPath\slate-rmm-agent.exe
 
 # move to the new directory
 Set-Location $installPath
-
-# Check if server certificate is self-signed
-$response = [Net.HttpWebRequest]::Create($serverUrl)
-$response.AllowAutoRedirect = $false
-$response.Timeout = 5000
-$response.GetResponse() | Out-Null
-
-$certificate = $response.ServicePoint.Certificate
-
-if ($certificate) {
-    if ($certificate.Subject -eq $certificate.Issuer) {
-        $selfSigned = $true
-    } else {
-        $selfSigned = $false
-    }
-} else {
-    Write-Output "Unable to retrieve server certificate."
-}
-
-# If it is a self-signed certificate, export it from the server and add it to the Trusted Root CAs
-if ($selfSigned) {
-    $certPath = "$installPath\cert.pem"
-    Write-Output "Server certificate is self-signed, exporting and adding to Trusted Root CAs..."
-    $certBytes = $certificate.Export([Security.Cryptography.X509Certificates.X509ContentType]::Cert)
-    [IO.File]::WriteAllBytes($certPath, $certBytes)
-    
-    Import-Certificate -FilePath $certPath -CertStoreLocation Cert:\LocalMachine\Root
-    Write-Output "Server certificate added to Trusted Root CAs successfully."
-} else {
-    Write-Output "Server certificate is not self-signed."
-}
 
 # Create the config.json file
 $config = @{

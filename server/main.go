@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// Initialize the database connection
-	dsn := "host=localhost user=postgres password=slatermm dbname=RMM_db sslmode=disable"
+	dsn := "host=localhost user=nexus password=slatenexus dbname=Nexus_db sslmode=disable"
 	database.InitDB(dsn)
 
 	// Create a new API router
@@ -80,19 +80,19 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		// 	fmt.Printf("%s: %s\n", key, value)
 		// }
 
-		//Only allow requests from the Nginx Container
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		//Only allow requests from the Authentik Container
+		// ip, _, err := net.SplitHostPort(r.RemoteAddr)
 
-		if err != nil {
-			http.Error(w, "Invalid request", http.StatusBadRequest)
-			return
-		}
-		if ip != "172.20.0.100" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
+		// if err != nil {
+		// 	http.Error(w, "Invalid request", http.StatusBadRequest)
+		// 	return
+		// }
+		// if ip != "172.20.0.252" {
+		// 	http.Error(w, "Forbidden", http.StatusForbidden)
+		// 	return
+		// }
 
-		log.Printf("Received %s request to %s from %s", r.Method, r.URL.Path, ip)
+		log.Printf("Received %s request to %s", r.Method, r.URL.Path)
 
 		// Set the headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -114,14 +114,28 @@ func APIMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check the authorization header value against the API_KEY .env file
 		// Load .env file
-		err := godotenv.Load()
+
+		// Only allow requests from the NGINX container
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+
+		if err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+
+		if ip != "172.20.0.252" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		err = godotenv.Load()
 		if err != nil {
 			http.Error(w, "could not load .env file", http.StatusInternalServerError)
 			return
 		}
-		apiKey := os.Getenv("API_KEY")
+		apiKey := os.Getenv("NEXUS_API_KEY")
 		if apiKey == "" {
-			log.Println("API_KEY not found in .env file")
+			log.Println("NEXUS_API_KEY not found in .env file")
 		}
 
 		authorizationHeader := r.Header.Get("Authorization")

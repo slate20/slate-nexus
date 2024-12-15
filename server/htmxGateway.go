@@ -9,8 +9,11 @@ import (
 func NewHTMXGateway() *http.ServeMux {
 	router := http.NewServeMux()
 
+	// Servce static files
+	fs := http.FileServer(http.Dir("../dashboard"))
+	router.Handle("/", fs)
+
 	// HTMX routes
-	router.HandleFunc("/", handlers.IndexHandler)
 	router.HandleFunc("/htmx/get-devices", handlers.GetDevices)
 	router.HandleFunc("/htmx/get-groups", handlers.GetGroups)
 	router.HandleFunc("/htmx/remoterequest/{id}", handlers.GetRemoteControlURL)

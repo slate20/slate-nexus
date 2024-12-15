@@ -41,13 +41,15 @@ cd server
 # Set permissions for the server binary
 chmod +x slatermm
 
-# Generate a random secret for API and for postgres
-export API_KEY =$(openssl rand -base64 32)
-export POSTGRES_PASSWORD=$(openssl rand -base64 32)
+# Generate a random secret for Nexus API, Postgres, and Authentik
+export PG_PASS=$(openssl rand -base64 32)
+export API_KEY=$(openssl rand -base64 32)
+export AUTHENTIK_SECRET=$(openssl rand -base64 32)
 
 # Write API info and secret to the .env file
-echo "API_KEY=$API_KEY" >> .env
-echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
+echo "PG_PASS=$PG_PASS" >> .env
+echo "NEXUS_API_KEY=$API_KEY" >> .env
+echo "AUTHENTIK_SECRET_KEY=$AUTHENTIK_SECRET" >> .env
 
 # Create the agent installer scripts
 ./create_installers.sh "$API_KEY"

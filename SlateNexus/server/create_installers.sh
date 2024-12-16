@@ -19,7 +19,7 @@ Set-Location \$PSScriptRoot
 # Prompt for server IP and append "https://"
 Write-Host "Enter the server FQDN: "
 \$serverUrl = Read-Host
-\$serverUrl = "https://" + \$serverUrl
+\$serverUrl = "https://api." + \$serverUrl
 
 # Create the directory structure
 \$installPath = "C:\Program Files\SlateNexus"

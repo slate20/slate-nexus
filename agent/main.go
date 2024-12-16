@@ -153,7 +153,7 @@ func agentSetup(config Config, configPath string) error {
 		return err
 	}
 
-	// Register the agent and get the token for AUTOMATION_SECRET
+	// Register the agent and get the host ID
 	fmt.Println("Registering agent...")
 	HostID, err := server.Register(data, config.ServerURL, config.APIKey)
 	if err != nil {

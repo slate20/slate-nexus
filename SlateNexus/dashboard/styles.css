@@ -62,6 +62,17 @@ nav ul li a:hover {
     background-color: #eeeeee;
 }
 
+.nav-links-bottom {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-links-bottom li {
+    flex-grow: 1;
+    align-content: flex-end;
+}
+
 /* Page Layout */
 .page-layout {
     display: flex;

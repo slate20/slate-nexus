@@ -15,11 +15,6 @@ read -p "Enter your FQDN for this server (e.g., nexus.example.com): " fqdn
 # Get the server IP address
 host_ip=$(hostname -I | awk '{print $1}')
 
-# Write domain info to the .env file
-echo "NEXUS_IP=$host_ip" >> .env
-echo "NEXUS_FQDN=$fqdn" >> .env
-echo "REMOTELY_FQDN=remotely.$fqdn" >> .env
-
 # Check if cert.pem and key.pem are already present
 if [ ! -f /etc/ssl/Nexus/cert.pem ] || [ ! -f /etc/ssl/Nexus/key.pem ]; then
     echo "Please run the generate_ssl.sh script or add your existing certificate and key to /etc/ssl/Nexus/. Re run this script once complete."
@@ -40,6 +35,11 @@ cd server
 
 # Set permissions for the server binary
 chmod +x slatermm
+
+# Write domain info to the .env file
+echo "NEXUS_IP=$host_ip" >> .env
+echo "NEXUS_FQDN=$fqdn" >> .env
+echo "REMOTELY_FQDN=remotely.$fqdn" >> .env
 
 # Generate a random secret for Nexus API, Postgres, and Authentik
 export PG_PASS=$(openssl rand -base64 32)

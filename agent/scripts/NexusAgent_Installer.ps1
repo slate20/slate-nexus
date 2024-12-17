@@ -89,6 +89,29 @@ Start-Sleep -Seconds 10
 
 Install-Remotely
 
+# Prompt the user to ask if they want to create a host record for the server
+Write-Host "Do you want to create a local host record for the server(if not handled by DNS)? (Y/N)"
+$createHostRecord = Read-Host
+
+if ($createHostRecord -eq "Y" -or $createHostRecord -eq "y") {
+    # Prompt for the server IP
+    Write-Host "Enter the server IP: "
+    $serverIP = Read-Host
+
+    # Create the host record
+    $hostRecord = "$serverIP`t$serverUrl"
+    $hostsFile = "$env:windir\System32\drivers\etc\hosts"
+
+    # Check if the host record already exists
+    if (-not (Get-Content $hostsFile | Select-String -Pattern $hostRecord -Quiet)) {
+        # Add the new host record
+        Add-Content -Path $hostsFile -Value $hostRecord -Force
+        Write-Host "Host record created successfully"
+    } else {
+        Write-Host "Host record already exists"
+    }
+}
+
 Write-Host "Installation completed successfully"
 
 # pause

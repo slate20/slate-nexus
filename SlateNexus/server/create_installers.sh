@@ -2,6 +2,9 @@
 
 API_KEY=$1
 
+# Create scripts dir if it doesn't exist
+mkdir -p ../agent/scripts
+
 # Function to create Windows installer script
 create_windows_installer() {
     cat << EOF > ../agent/scripts/NexusAgent_Installer.ps1
@@ -102,3 +105,6 @@ EOF
 
     echo "NexusAgent_Installer.ps1 created successfully."
 }
+
+# Call the function to create the Windows installer script
+create_windows_installer

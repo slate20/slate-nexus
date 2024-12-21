@@ -88,7 +88,7 @@ services:
         condition: service_healthy
 
   authentik-worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.10.5}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.12.0}
     networks:
       nexus_network:
         ipv4_address: 172.20.0.100

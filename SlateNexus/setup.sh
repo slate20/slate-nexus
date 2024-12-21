@@ -43,16 +43,22 @@ echo "REMOTELY_FQDN=remotely.$fqdn" >> .env
 
 # Generate a random secret for Nexus API, Postgres, and Authentik
 export PG_PASS=$(openssl rand -base64 32)
-export API_KEY=$(openssl rand -base64 32)
+export NEXUS_API_KEY=$(openssl rand -base64 32)
 export AUTHENTIK_SECRET=$(openssl rand -base64 32)
+export AK_BT_PASS=$(openssl rand -base64 32)
+export AK_BT_TOKEN=$(openssl rand -base64 64)
+export AK_BT_EMAIL=admin@example.com
 
 # Write API info and secret to the .env file
 echo "PG_PASS=$PG_PASS" >> .env
-echo "NEXUS_API_KEY=$API_KEY" >> .env
+echo "NEXUS_API_KEY=$NEXUS_API_KEY" >> .env
 echo "AUTHENTIK_SECRET_KEY=$AUTHENTIK_SECRET" >> .env
+echo "AK_BT_PASS=$AK_BT_PASS" >> .env
+echo "AK_BT_TOKEN=$AK_BT_TOKEN" >> .env
+echo "AK_BT_EMAIL=$AK_BT_EMAIL" >> .env
 
 # Create the agent installer scripts
-./create_installers.sh "$API_KEY"
+./create_installers.sh "$NEXUS_API_KEY"
 
 # Create a systemd service file for the server
 echo "[Unit]
@@ -81,6 +87,17 @@ sudo systemctl start slatermm
 
 # Enable the server to start on boot
 sudo systemctl enable slatermm
+
+# Wait 30 seconds for containers to finish starting
+echo "Waiting for services to start..."
+until curl --output /dev/null --silent --head --fail http://auth.$fqdn; do
+    printf '.'
+    sleep 1
+done
+
+# Run the authentik_config script
+echo "Configuring Authentik..."
+sudo ./authentik_config.sh
 
 # Inform the user of Remotely url
 echo "Remotely is now available at ${REMOTELY_FQDN}"

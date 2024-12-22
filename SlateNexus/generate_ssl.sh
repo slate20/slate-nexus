@@ -62,8 +62,7 @@ if [ "$provider_choice" -eq 4 ]; then
     # Create a virtual environment for the GoDaddy plugin
     sudo mkdir -p /opt/certbot-godaddy
     sudo python3 -m venv /opt/certbot-godaddy
-    source /opt/certbot-godaddy/bin/activate
-    pip install certbot-dns-godaddy
+    sudo /opt/certbot-godaddy/bin/pip install certbot-dns-godaddy
 fi
 
 # Directory to store credentials securely
@@ -101,7 +100,7 @@ case $provider_choice in
         echo "dns_godaddy_key = $godaddy_key" | sudo tee "$cred_file" > /dev/null
         echo "dns_godaddy_secret = $godaddy_secret" | sudo tee -a "$cred_file" > /dev/null
         sudo chmod 600 "$cred_file"
-        sudo certbot certonly --authenticator dns-godaddy --dns-godaddy-credentials "$cred_file" --dns-godaddy-propagation-seconds 900 -d "*.$fqdn" -d "$fqdn" --agree-tos
+        sudo /opt/certbot-godaddy/bin/certbot certonly --authenticator dns-godaddy --dns-godaddy-credentials "$cred_file" --dns-godaddy-propagation-seconds 900 -d "*.$fqdn" -d "$fqdn" --agree-tos
         deactivate
         ;;
     5)  # Manual DNS challenge

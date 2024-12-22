@@ -34,7 +34,7 @@ sudo service docker restart
 cd server
 
 # Set permissions for the server binary
-chmod +x slatermm
+chmod +x slatenexus
 
 # Write domain info to the .env file
 echo "NEXUS_IP=$host_ip" >> .env
@@ -62,10 +62,10 @@ echo "AK_BT_EMAIL=$AK_BT_EMAIL" >> .env
 
 # Create a systemd service file for the server
 echo "[Unit]
-Description=SlaterMM Server
+Description=Slater Nexus Server
 
 [Service]
-ExecStart=$(pwd)/slatermm
+ExecStart=$(pwd)/slatenexus
 Restart=always
 User=$(whoami)
 Group=$(whoami)
@@ -74,7 +74,7 @@ Environment=GO_ENV=production
 WorkingDirectory=$(pwd)
 
 [Install]
-WantedBy=multi-user.target" | sudo tee /etc/systemd/system/slatermm.service
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/slatenexus.service
 
 # Reload the systemd daemon
 sudo systemctl daemon-reload
@@ -83,10 +83,10 @@ sudo systemctl daemon-reload
 docker-compose up -d
 
 # Start the server
-sudo systemctl start slatermm
+sudo systemctl start slatenexus
 
 # Enable the server to start on boot
-sudo systemctl enable slatermm
+sudo systemctl enable slatenexus
 
 # Wait 30 seconds for containers to finish starting
 echo "Waiting for services to start..."

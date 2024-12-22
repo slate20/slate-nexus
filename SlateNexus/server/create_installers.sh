@@ -47,16 +47,16 @@ Set-Location \$installPath
 # Convert to JSON and save to file using UTF-8
 \$config | ConvertTo-Json | Out-File "config.json" -Encoding utf8
 
-# Function to install the Slate-RMM agent
-function Install-SlateRMMAgent {
+# Function to install the Slate Nexus agent
+function Install-SlateNexusAgent {
     \$agentPath = "C:\Program Files\SlateNexus\slate-rmm-agent.exe"
 
-    Write-Host "Installing Slate-RMM agent..."
+    Write-Host "Installing Slate Nexus agent..."
 
     # Create the Windows service
     New-Service -Name "SlateNexusAgent" -BinaryPathName \$agentPath -DisplayName "Slate Nexus Agent" -StartupType Automatic
 
-    Write-Host "Slate-RMM agent installed successfully"
+    Write-Host "Slate Nexus agent installed successfully"
 
     # Start the service
     Start-Service "SlateNexusAgent"
@@ -90,7 +90,7 @@ function Install-Remotely {
 }
 
 # Main installation process
-Install-SlateRMMAgent
+Install-SlateNexusAgent
 
 # Wait for 10 seconds
 Start-Sleep -Seconds 10

@@ -22,6 +22,7 @@ Set-Location \$PSScriptRoot
 # Prompt for server IP and append "https://"
 Write-Host "Enter the server FQDN: "
 \$serverUrl = Read-Host
+\$remotelyUrl = "https://remotely." + \$serverUrl
 \$serverUrl = "https://api." + \$serverUrl
 
 # Create the directory structure
@@ -32,7 +33,7 @@ New-Item -ItemType Directory -Path \$installPath
 New-Item -ItemType Directory -Path \$remotelyPath
 
 # Copy the agent executable to the installation directory
-Copy-Item ".\slate-rmm-agent.exe" -Destination "\$installPath\slate-rmm-agent.exe"
+Copy-Item ".\slate-nexus-agent.exe" -Destination "\$installPath\slate-nexus-agent.exe"
 
 # move to the new directory
 Set-Location \$installPath
@@ -49,7 +50,7 @@ Set-Location \$installPath
 
 # Function to install the Slate Nexus agent
 function Install-SlateNexusAgent {
-    \$agentPath = "C:\Program Files\SlateNexus\slate-rmm-agent.exe"
+    \$agentPath = "C:\Program Files\SlateNexus\slate-nexus-agent.exe"
 
     Write-Host "Installing Slate Nexus agent..."
 
@@ -75,11 +76,14 @@ function Install-Remotely {
 
 
     # Download the Remotely installer
-    Write-Host "Downloading Remotely agent..."
-    Invoke-WebRequest -Uri "\$serverUrl/api/download/remotely-win" -OutFile \$remotelyInstallerPath
+    Write-Host "Downloading Remotely installer"
+    \$headers = @{
+        "Authorization" = "Bearer $API_KEY"
+    }
+    Invoke-WebRequest -Uri "\$serverUrl/download/remotely-win" -OutFile \$remotelyInstallerPath -Headers \$headers
 
     Write-Host "Installing Remotely agent..."
-    & \$remotelyInstallerPath -serverurl (\$serverUrl + ":4000") -install
+    & \$remotelyInstallerPath -serverurl (\$remotelyUrl) -install
 
     if (Test-Path \$remotelySoftwarePath) {
         Write-Host "Remotely agent installation verified"

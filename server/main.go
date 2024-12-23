@@ -14,8 +14,14 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	// Initialize the database connection
-	dsn := "host=localhost user=nexus password=slatenexus dbname=Nexus_db sslmode=disable"
+	dsn := "host=localhost user=" + os.Getenv("PG_USER") + " password=" + os.Getenv("PG_PASS") + " dbname=" + os.Getenv("PG_DB") + " sslmode=disable"
 	database.InitDB(dsn)
 
 	// Create a new API router

@@ -118,7 +118,7 @@ server {
     }
 }
 
-# Nexus server block
+# Nexus API server block
 server {
     listen 443 ssl default_server;
     server_name api.${NEXUS_FQDN};

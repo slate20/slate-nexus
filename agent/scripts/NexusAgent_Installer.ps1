@@ -24,7 +24,7 @@ New-Item -ItemType Directory -Path $installPath
 New-Item -ItemType Directory -Path $remotelyPath
 
 # Copy the agent executable to the installation directory
-Copy-Item ".\slate-rmm-agent.exe" -Destination "$installPath\slate-rmm-agent.exe"
+Copy-Item ".\slate-nexus-agent.exe" -Destination "$installPath\slate-nexus-agent.exe"
 
 # move to the new directory
 Set-Location $installPath
@@ -39,9 +39,9 @@ $config = @{
 # Convert to JSON and save to file using UTF-8
 $config | ConvertTo-Json | Out-File "config.json" -Encoding utf8
 
-# Function to install the Slate-RMM agent
+# Function to install the Slate-Nexus agent
 function Install-SlateRMMAgent {
-    $agentPath = "C:\Program Files\SlateNexus\slate-rmm-agent.exe"
+    $agentPath = "C:\Program Files\SlateNexus\slate-nexus-agent.exe"
     
     Write-Host "Installing Slate-RMM agent..."
 
@@ -68,10 +68,10 @@ function Install-Remotely {
 
     # Download the Remotely installer
     Write-Host "Downloading Remotely agent..."
-    Invoke-WebRequest -Uri "$serverUrl/api/download/remotely-win" -OutFile $remotelyInstallerPath
+    Invoke-WebRequest -Uri "$serverUrl/download/remotely-win" -OutFile $remotelyInstallerPath
 
     Write-Host "Installing Remotely agent..."
-    & $remotelyInstallerPath -serverurl ($serverUrl + ":4000") -install
+    & $remotelyInstallerPath -serverurl ($serverUrl + ":5000") -install
 
     if (Test-Path $remotelySoftwarePath) {
         Write-Host "Remotely agent installation verified"

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slate-rmm-agent/collectors"
-	"slate-rmm-agent/logger"
+	"slate-nexus-agent/collectors"
+	"slate-nexus-agent/logger"
 )
 
 // Register sends a POST request to the server to register the agent

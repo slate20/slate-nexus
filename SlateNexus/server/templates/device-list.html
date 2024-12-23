@@ -9,12 +9,12 @@
     <td>{{ .OS }}</td>
     <td>{{ (toLocalTime .LastSeen).Format "01/02/2006 3:04 PM" }}</td>
     <td>{{ .LastUser }}</td>
-</tr>
 <button hx-get="/htmx/remoterequest/{{ .ID }}"
     hx-trigger="click"
     hx-swap="none">
     Remote
 </button>
+</tr>
 {{ else }}
 <tr>
     <td colspan="9">No devices found.</td>

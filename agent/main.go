@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"slate-rmm-agent/collectors"
-	"slate-rmm-agent/logger"
-	"slate-rmm-agent/server"
+	"slate-nexus-agent/collectors"
+	"slate-nexus-agent/logger"
+	"slate-nexus-agent/server"
 	"time"
 
 	"golang.org/x/sys/windows/svc"

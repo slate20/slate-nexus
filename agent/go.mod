@@ -1,4 +1,4 @@
-module slate-rmm-agent
+module slate-nexus-agent
 
 go 1.23.0
 

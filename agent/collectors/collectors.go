@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slate-rmm-agent/logger"
+	"slate-nexus-agent/logger"
 	"strconv"
 	"strings"
 	"time"

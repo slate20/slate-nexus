@@ -12,6 +12,8 @@ services:
       POSTGRES_DB: ${PG_DB}
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASS}
+    env_file:
+      - .env
     networks:
       - nexus_network
     ports:
@@ -100,7 +102,7 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
       AUTHENTIK_BOOTSTRAP_PASSWORD: ${AK_BT_PASS}
       AUTHENTIK_BOOTSTRAP_TOKEN: ${AK_BT_TOKEN}
-      AUTHENTIK_BOOTSTRAP_EMAIL: localhost
+      AUTHENTIK_BOOTSTRAP_EMAIL: ${AK_BT_EMAIL}
     # `user: root` and the docker socket volume are optional.
     # See more for the docker socket integration here:
     # https://goauthentik.io/docs/outposts/integrations/docker

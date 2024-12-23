@@ -95,6 +95,9 @@ until curl --output /dev/null --silent --head --fail http://auth.$fqdn; do
     sleep 1
 done
 
+# Copy logo.png from dashboard/assets to media dir
+cp ../dashboard/assets/logo.png ./media
+
 # Run the authentik_config script
 echo "Configuring Authentik..."
 sudo ./authentik_config.sh

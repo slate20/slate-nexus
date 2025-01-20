@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slate-Nexus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./Device_Page/device_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.1"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">
+            <img src="./assets/logo.png" width="64px" height="64px" alt="Company-Logo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" hx-get="./Device_Page/devices.html" hx-target="#main-content">Devices</a></li>
+            <li><a id="remotelyLink" href="/" target="_blank">Remotely</a></li>
+            <li><a href="#" hx-get="settings.html" hx-target="#main-content">Settings</a></li>
+        </ul>
+        <ul class="nav-links-bottom">
+            <li><a id="logout-link" href="https://auth.nexus.slatecapit.com/flows/-/default/invalidation/">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="main-content">
+        <!-- Dynamic content will be inserted here using HTMX -->
+         <h1>Welcome to Slate-Nexus!</h1>
+    </div>
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var remotelyLink = document.getElementById('remotelyLink');
+        var currentHost = window.location.hostname;
+        remotelyLink.href = 'https://remotely.' + currentHost;
+    });
+</script>
+</html>

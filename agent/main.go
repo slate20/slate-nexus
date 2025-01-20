@@ -149,7 +149,7 @@ func getConfigPath() string {
 	if runtime.GOOS == "windows" {
 		return "C:\\Program Files\\SlateNexus\\config.json"
 	}
-	return "/etc/slatenexus/config.json"
+	return "/opt/SlateNexus/config.json"
 }
 
 // // downloadFile downloads a file from the given URL and saves it to the given path

@@ -112,3 +112,6 @@ EOF
 
 # Call the function to create the Windows installer script
 create_windows_installer
+
+# Zip the Install-Remotely.ps1 script with the slate-nexus-agent.exe
+zip -j ../agent/NexusAgent_win.zip ../agent/scripts/NexusAgent_Installer.ps1 ../agent/slate-nexus-agent.exe

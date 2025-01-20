@@ -110,8 +110,106 @@ EOF
     echo "NexusAgent_Installer.ps1 created successfully."
 }
 
+# Function to create Linux installer script
+create_linux_installer() {
+    cat << EOF > ../agent/scripts/NexusAgent_Installer.sh
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Check if the script is running as root
+if [ "\$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+
+# Prompt for server FQDN
+read -p "Enter the server FQDN: " server_url
+remotely_url="https://remotely.\$server_url"
+server_url="https://api.\$server_url"
+
+# Create the directory structure
+install_path="/opt/SlateNexus"
+remotely_path="\$install_path/Remotely"
+
+mkdir -p \$install_path
+mkdir -p \$remotely_path
+
+# Copy the agent executable to the installation directory
+cp ./slate-nexus-agent \$install_path/slate-nexus-agent
+
+# Create the config.json file
+cat > \$install_path/config.json << EOL
+{
+    "server_url": "\$server_url",
+    "host_id": 0,
+    "api_key": "$API_KEY"
+}
+EOL
+
+# Function to install the Slate Nexus agent
+install_slate_nexus_agent() {
+    echo "Installing Slate Nexus agent..."
+
+    # Copy the systemd service file
+    cat > /etc/systemd/system/SlateNexusAgent.service << EOL
+[Unit]
+Description=Slate Nexus Agent
+After=network.target
+
+[Service]
+ExecStart=\$install_path/slate-nexus-agent
+Restart=always
+User=root
+Group=root
+Environment=PATH=/usr/bin:/usr/local/bin
+WorkingDirectory=\$install_path
+
+[Install]
+WantedBy=multi-user.target
+
+EOL
+
+    # Reload systemd to load the service
+    systemctl daemon-reload
+
+    # Enable and start the service
+    systemctl enable SlateNexusAgent.service
+    systemctl start SlateNexusAgent.service
+
+    echo "Slate Nexus agent installed successfully"
+}
+
+# Main installation process
+install_slate_nexus_agent
+
+# Wait for 10 seconds
+sleep 10
+
+# Optionally add host record
+read -p "Do you want to create a local host record for the server(if not handled by DNS)? (Y/N)" create_host_record
+
+if [ "\$create_host_record" =~ ^[Yy]$ ]; then
+    read -p "Enter the server IP: " server_ip
+    echo "\$server_ip    \$server_url" >> /etc/hosts
+    echo "Host record created successfully"
+fi
+
+echo "Installation completed successfully"
+EOF
+
+    chmod +x ../agent/scripts/NexusAgent_Installer.sh
+}
+
 # Call the function to create the Windows installer script
 create_windows_installer
 
+# Call the function to create the Linux installer script
+create_linux_installer
+
 # Zip the Install-Remotely.ps1 script with the slate-nexus-agent.exe
 zip -j ../agent/NexusAgent_win.zip ../agent/scripts/NexusAgent_Installer.ps1 ../agent/slate-nexus-agent.exe
+
+# tar the NexusAgent_Installer.sh script with the slate-nexus-agent executable
+tar -czf ../agent/NexusAgent_lin.tar.gz -C ../agent/scripts NexusAgent_Installer.sh slate-nexus-agent

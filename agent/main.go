@@ -4,45 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"runtime"
 	"slate-nexus-agent/collectors"
 	"slate-nexus-agent/logger"
 	"slate-nexus-agent/server"
 	"time"
-
-	"golang.org/x/sys/windows/svc"
 )
-
-type Service struct{}
-
-func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
-	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
-	changes <- svc.Status{State: svc.StartPending}
-	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-
-	stop := make(chan struct{})
-
-	go runAgent(stop)
-
-	for {
-		select {
-		case c := <-r:
-			switch c.Cmd {
-			case svc.Interrogate:
-				changes <- c.CurrentStatus
-			case svc.Stop, svc.Shutdown:
-				close(stop)
-				changes <- svc.Status{State: svc.StopPending}
-				return
-			default:
-				log.Printf("unexpected control request: #%d", c)
-			}
-		}
-	}
-}
 
 // Config represents the configuration for the agent
 type Config struct {
@@ -61,10 +30,7 @@ func main() {
 	logger.LogInfo("Starting SlateNexusAgent...")
 
 	// Run as a service
-	err = svc.Run("SlateNexusAgent", &Service{})
-	if err != nil {
-		logger.LogError("Service failed: %v", err)
-	}
+	runAsService()
 }
 
 func runAgent(stop <-chan struct{}) {
@@ -85,7 +51,7 @@ func runAgent(stop <-chan struct{}) {
 
 	// If HostID is 0, run agentSetup and reload config
 	if config.HostID == 0 {
-		configFile := "C:\\Program Files\\SlateNexus\\config.json"
+		configFile := getConfigPath()
 		err = agentSetup(config, configFile)
 		if err != nil {
 			logger.LogError("could not setup agent: %v", err)
@@ -122,7 +88,7 @@ func loadConfig() (Config, error) {
 	var config Config
 
 	// Define the path to the config file
-	configFile := "C:\\Program Files\\SlateNexus\\config.json"
+	configFile := getConfigPath()
 
 	// Read the config file
 	data, err := os.ReadFile(configFile)
@@ -179,24 +145,31 @@ func agentSetup(config Config, configPath string) error {
 	return nil
 }
 
-// downloadFile downloads a file from the given URL and saves it to the given path
-func downloadFile(url string, path string) error {
-	// Create the file
-	out, err := os.Create(path)
-	if err != nil {
-		return err
+func getConfigPath() string {
+	if runtime.GOOS == "windows" {
+		return "C:\\Program Files\\SlateNexus\\config.json"
 	}
-	defer out.Close()
-
-	// Get the data
-	// deepcode ignore Ssrf: Validation performed after user input
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Write the data to the file
-	_, err = io.Copy(out, resp.Body)
-	return err
+	return "/etc/slatenexus/config.json"
 }
+
+// // downloadFile downloads a file from the given URL and saves it to the given path
+// func downloadFile(url string, path string) error {
+// 	// Create the file
+// 	out, err := os.Create(path)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer out.Close()
+
+// 	// Get the data
+// 	// deepcode ignore Ssrf: Validation performed after user input
+// 	resp, err := http.Get(url)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	// Write the data to the file
+// 	_, err = io.Copy(out, resp.Body)
+// 	return err
+// }

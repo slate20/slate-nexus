@@ -2,12 +2,12 @@ package collectors
 
 import (
 	"encoding/json"
-	"log"
 	"net"
 	"os"
-	"os/user"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slate-nexus-agent/logger"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +53,7 @@ func CollectData() (AgentData, error) {
 	// Get Remotely ID
 	remotelyID, err := getRemotelyID()
 	if err != nil {
-		log.Printf("could not get Remotely ID: %v", err) // Continue with empty Remotely ID if an error occurs
+		logger.LogError("could not get Remotely ID: %v", err) // Continue with empty Remotely ID if an error occurs
 	}
 
 	// Get current user
@@ -62,17 +62,23 @@ func CollectData() (AgentData, error) {
 		return AgentData{}, err
 	}
 
-	return AgentData{
+	agentData := AgentData{
 		Hostname:      hostname,
 		IPAddress:     hardware.IPAddress,
 		OS:            hardware.OS,
 		OSVersion:     hardware.OSVersion,
 		HardwareSpecs: hardware,
 		AgentVersion:  "1.0.0",
-		LastUser:      user,
 		LastSeen:      time.Now(),
 		RemotelyID:    remotelyID,
-	}, nil
+	}
+
+	// Only update LastUser if user is not empty
+	if user != "" {
+		agentData.LastUser = user
+	}
+
+	return agentData, nil
 }
 
 func getHardwareSpecs() (Hardware, error) {
@@ -124,18 +130,18 @@ func getHardwareSpecs() (Hardware, error) {
 	case "windows":
 		partitions, err := disk.Partitions(false)
 		if err != nil {
-			log.Printf("Error getting disk partitions: %v", err)
+			logger.LogError("Error getting disk partitions: %v", err)
 			hardware.Storage = "Unknown"
 		}
 		var totalStorage uint64
 		for _, partition := range partitions {
 			if !isDriveAccessible(partition.Mountpoint) {
-				log.Printf("Skipping inaccessible drive: %s", partition.Mountpoint)
+				logger.LogWarn("Skipping inaccessible drive: %s", partition.Mountpoint)
 				continue
 			}
 			usage, err := disk.Usage(partition.Mountpoint)
 			if err != nil {
-				log.Printf("could not get disk usage for %s: %v", partition.Mountpoint, err)
+				logger.LogError("could not get disk usage for %s: %v", partition.Mountpoint, err)
 				continue
 			}
 			totalStorage += usage.Total
@@ -161,12 +167,13 @@ func isDriveAccessible(path string) bool {
 }
 
 func getCurrentUser() (string, error) {
-	user, err := user.Current()
+	cmd := exec.Command("Powershell", "-Command", "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty UserName")
+	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 
-	return user.Username, nil
+	return strings.TrimSpace(string(output)), nil
 }
 
 func getRemotelyID() (string, error) {

@@ -27,9 +27,6 @@ func NewGateway() *mux.Router {
 		http.ServeFile(w, r, "../agent/Install-Remotely.ps1")
 	})
 
-	// Route for Livestatus queries
-	router.HandleFunc("/api/livestatus", api_handlers.QueryLivestatusHandler).Methods("GET")
-
 	return router
 
 }

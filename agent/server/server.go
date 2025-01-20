@@ -4,52 +4,70 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"slate-rmm-agent/collectors"
+	"slate-nexus-agent/collectors"
+	"slate-nexus-agent/logger"
 )
 
 // Register sends a POST request to the server to register the agent
-func Register(data collectors.AgentData, ServerURL string) (int32, string, error) {
-	url := ServerURL + "/api/agents/register"
+func Register(data collectors.AgentData, ServerURL string, apiKey string) (int32, error) {
+	url := ServerURL + "/agents/register"
 	// Convert data to JSON
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return 0, "", err
+		return 0, err
 	}
 
 	// Send a POST request to the AgentRegister endpoint
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return 0, "", err
+		return 0, err
 	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+
 	defer resp.Body.Close()
 
-	// Decode the response
-	var result struct {
-		HostID int32  `json:"host_id"`
-		Token  string `json:"token"`
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.LogError("error reading response body: %v", err)
+		return 0, err
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return 0, "", err
+
+	// Decode the response and get the host ID
+	var result struct {
+		HostID int32 `json:"host_id"`
+	}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		logger.LogError("Error decoding response: %v", err)
+		return 0, err
 	}
 
 	// Check the response status code
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return 0, "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		logger.LogError("Unexpected status code: %d", resp.StatusCode)
+		return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	return result.HostID, result.Token, nil
+	return result.HostID, nil
 }
 
 // Heartbeat sends a POST request to the server with updated agent information
-func Heartbeat(hostID int32, ServerURL string) error {
+func Heartbeat(hostID int32, ServerURL string, apiKey string) error {
 	// Collect agent data
 	data, err := collectors.CollectData()
 	if err != nil {
 		return err
 	}
 
-	url := ServerURL + "/api/agents/" + fmt.Sprint(hostID)
+	url := ServerURL + "/agents/" + fmt.Sprint(hostID)
 
 	// Convert data to JSON
 	jsonData, err := json.Marshal(data)
@@ -66,8 +84,9 @@ func Heartbeat(hostID int32, ServerURL string) error {
 		return err
 	}
 
-	// Set the content type to application/json
+	// Set the headers
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	// Send the request
 	client := &http.Client{}

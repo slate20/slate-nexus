@@ -7,9 +7,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"slate-rmm/database"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -50,10 +54,9 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	apiID := os.Getenv("REMOTELY_API_ID")
 
 	// get the RemotelyID using the host ID from the end of request URL
-	hostID := strings.TrimPrefix(r.URL.Path, "/remoterequest/")
-
-	if hostID == "" {
-		http.Error(w, "missing host ID", http.StatusBadRequest)
+	hostID := strings.TrimPrefix(r.URL.Path, "/htmx/remoterequest/")
+	if _, err := strconv.Atoi(hostID); err != nil || hostID == "" {
+		http.Error(w, "invalid host ID", http.StatusBadRequest)
 		return
 	}
 
@@ -63,10 +66,21 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(agent.RemotelyID)
+	// Validate RemotelyID
+	if agent.RemotelyID == "" || !regexp.MustCompile(`[a-zA-Z0-9]+$`).MatchString(agent.RemotelyID) {
+		http.Error(w, "invalid RemotelyID", http.StatusBadRequest)
+		return
+	}
+
+	baseURL, err := url.Parse(apiURL)
+	if err != nil {
+		http.Error(w, "invalid API URL", http.StatusBadRequest)
+		return
+	}
 
 	// build the Remotely API URL
-	url := apiURL + "/RemoteControl/" + agent.RemotelyID
+	baseURL.Path = path.Join(baseURL.Path, "RemoteControl", agent.RemotelyID)
+	url := baseURL.String()
 
 	// build the Remotely API request
 	req, err := http.NewRequest("GET", url, nil)
@@ -83,6 +97,7 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Do(req)
 	if err != nil {
 		http.Error(w, "could not send request", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()

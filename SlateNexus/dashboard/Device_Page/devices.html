@@ -7,7 +7,7 @@
                     <input type="text" placeholder="Search Groups" hx-post="/search-groups" hx-trigger="keyup changed delay:500ms" hx-target=".group-items">
                 </div>
                 <a href="#">View All</a>
-                <a href="#">Edit Groups</a>
+                <a href="#" hx-get="/htmx/edit-groups-modal" hx-target="#modal-container" hx-trigger="click">Edit Groups</a>
             </div>
             <div class="group-items">
                 <!-- Group items will be inserted here using HTMX -->
@@ -46,4 +46,8 @@
                 </table>
             </div>
         </div>
+    </div>
+    <div id="modal-container" class="modal" hx-target="this">
+        <!-- Modal content will be inserted here -->
+    </div>
 </div>

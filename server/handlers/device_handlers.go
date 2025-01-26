@@ -3,14 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"slate-rmm/database"
 	"strconv"
@@ -29,16 +27,8 @@ func GetDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load templates
-	templates := template.Must(template.New("").Funcs(CommonFuncMap).ParseGlob(filepath.Join("templates", "*.html")))
-
-	// Render the template with the fetched data
-	err = templates.ExecuteTemplate(w, "device-list.html", agents)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Template execution failed:", err)
-		return
-	}
+	// Render the template
+	RenderTemplate(w, "device-list.html", agents)
 }
 
 func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {

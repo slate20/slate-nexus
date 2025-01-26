@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 	"slate-rmm/database"
 )
 
@@ -18,14 +16,17 @@ func GetGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load templates
-	templates := template.Must(template.New("").Funcs(CommonFuncMap).ParseGlob(filepath.Join("templates", "*.html")))
-
 	// Render the template
-	err = templates.ExecuteTemplate(w, "group-items.html", groups)
+	RenderTemplate(w, "group-items.html", groups)
+}
+
+func EditGroupsModal(w http.ResponseWriter, r *http.Request) {
+	groups, err := database.GetAllGroups()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("Template execution failed:", err)
+		http.Error(w, "Failed to fetch groups", http.StatusInternalServerError)
 		return
 	}
+
+	// Render the template
+	RenderTemplate(w, "edit-groups-modal.html", groups)
 }

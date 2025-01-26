@@ -1,0 +1,17 @@
+<div class="modal-content">
+    <h2>Edit Groups</h2>
+    <ul class="group-items">
+        {{ range . }}
+        <li>
+            {{ .GroupName }}
+            <button hx-put="/htmx/rename-group/{{ .GroupID }}" hx-prompt="Enter new name for {{ .GroupName }}">Rename</button>
+            <button hx-delete="/htmx/delete-group/{{ .GroupID }}" hx-confirm="Are you sure you want to delete {{ .GroupName }}?">Delete</button>
+        </li>
+        {{ end }}
+    </ul>
+    <form hx-post="/htmx/create-group" hx-target=".group-list" hx-swap="beforeend">
+        <input type="text" name="group_name" placeholder="New group name" required>
+        <button type="submit">Create Group</button>
+    </form>
+    <button hx-get="/htmx/close-modal" hx-target="#modal-container">Close</button>
+</div>

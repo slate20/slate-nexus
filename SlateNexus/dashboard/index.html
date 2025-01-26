@@ -37,5 +37,17 @@
         var currentHost = window.location.hostname;
         remotelyLink.href = 'https://remotely.' + currentHost;
     });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'modal-container') {
+            evt.detail.target.classList.add('show');
+        }
+    });
+
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+        if (evt.detail.target.id === 'modal-container' && evt.detail.xhr.status === 200) {
+            evt.detail.target.classList.remove('show');
+        }
+    });
 </script>
 </html>

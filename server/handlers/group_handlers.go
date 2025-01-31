@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"slate-rmm/database"
+	"strconv"
 	"strings"
 )
 
@@ -88,4 +89,55 @@ func DeleteGroup(w http.ResponseWriter, r *http.Request) {
 
 	// Call EditGroupsModal
 	EditGroupsModal(w, r)
+}
+
+func AddDevicesToGroupModal(w http.ResponseWriter, r *http.Request) {
+	groups, err := database.GetAllGroups()
+	if err != nil {
+		http.Error(w, "Failed to fetch groups", http.StatusInternalServerError)
+		return
+	}
+
+	//extract the selectedDevices from he request body
+	selectedDevices := r.URL.Query().Get("selectedDevices")
+
+	data := map[string]interface{}{
+		"Groups":          groups,
+		"selectedDevices": selectedDevices,
+	}
+
+	// Render the template
+	RenderTemplate(w, "add-to-group-modal.html", data)
+}
+
+func AddDevicesToGroup(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	groupID, err := strconv.Atoi(r.FormValue("group_id"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	deviceIDs := strings.Split(r.FormValue("device_ids"), ",")
+	deviceIDsInt := make([]int, len(deviceIDs))
+	for i, deviceID := range deviceIDs {
+		id, err := strconv.Atoi(deviceID)
+		if err != nil {
+			http.Error(w, "Invalid device ID", http.StatusBadRequest)
+			return
+		}
+		deviceIDsInt[i] = id
+	}
+
+	for _, deviceID := range deviceIDsInt {
+		err := database.AddHostToGroup(deviceID, groupID)
+		if err != nil {
+			http.Error(w, "Failed to add device to group", http.StatusInternalServerError)
+			log.Println("Failed to add device to group:", err)
+			return
+		}
+	}
+
+	w.Header().Set("HX-Trigger", "group-list-update")
+	w.WriteHeader(http.StatusOK)
 }

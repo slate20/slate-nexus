@@ -18,7 +18,11 @@
          <div class="main-content">
             <h2>Device List</h2>
             <div class="top-buttons">
-                <button>Add To Group</button>
+                <button id="add-to-group-btn"
+                    hx-get="/htmx/add-to-group-modal"
+                    hx-target="#modal-container"
+                    hx-vals="js:{selectedDevices: getSeletedDevices()}"
+                >Add To Group</button>
                 <button>Remove From Group</button>
                 <button>Run Command</button>
                 <button>Run Script</button>
@@ -41,7 +45,7 @@
                         </tr>
                     </thead>
                     <tbody> 
-                        <!-- Body will be populated via API call -->
+                        <!-- Body will be populated via HTMX -->
                     </tbody>
                 </table>
             </div>

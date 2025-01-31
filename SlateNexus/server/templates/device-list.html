@@ -1,6 +1,6 @@
 {{ range . }}
 <tr>
-    <td><input type="checkbox"></td>
+    <td><input type="checkbox" class="device-checkbox" value="{{ .ID }}"></td>
     <td>{{ .Hostname }}</td>
     <td><span class="status {{ getStatusClass .LastSeen }}">{{ getStatusClass .LastSeen }}</span></td>
     <td>Workstation</td>
@@ -22,6 +22,20 @@
 {{ end }}
  
 <script>
+    function getSelectedDevices() {
+        let selected = [];
+        document.querySelectorAll('.device-checkbox:checked').forEach((checkbox) => {
+            selected.push(checkbox.value);
+        });
+        return selected.join(',');
+    }
+
+    function toggleAll(source) {
+        document.querySelectorAll('.device-checkbox').forEach((checkbox) => {
+            checkbox.checked = source.checked;
+        });
+    }
+
     document.body.addEventListener('htmx:afterOnLoad', function(event) {
         if (event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
             var response = JSON.parse(event.detail.xhr.responseText);

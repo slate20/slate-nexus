@@ -1,0 +1,14 @@
+<div class="modal-content">
+    <h3>Add Devices to Group</h3>
+    <form hx-post="/htmx/add-to-group" hx-target="#modal-container" hx-trigger="submit">
+        <label for="group-select">Select Group:</label>
+        <select name="group_id" id="group-select">
+            {{ range .Groups }}
+            <option value="{{ .GroupID }}">{{ .GroupName }}</option>
+            {{ end }}
+        </select>
+        <input type="hidden" name="device_ids" value="{{ .SelectedDevices }}">
+        <button type="submit">Add</button>
+        <button type="button" onclick="document.getElementById('modal-container').classList.remove('show')">Cancel</button>
+    </form>
+</div>

@@ -1,7 +1,7 @@
 <div>
     <div class="page-layout">
         <!-- Group List-->
-        <div class="group-list" hx-get="/htmx/get-groups" hx-trigger="load" hx-target=".group-items">
+        <div class="group-list" hx-get="/htmx/get-groups" hx-trigger="load, group-list-update from:body" hx-target=".group-items">
             <div class="group-list-header">
                 <div class="search-group">
                     <input type="text" placeholder="Search Groups" hx-post="/search-groups" hx-trigger="keyup changed delay:500ms" hx-target=".group-items">

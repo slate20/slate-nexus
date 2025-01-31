@@ -3,15 +3,16 @@
     <ul class="group-items">
         {{ range . }}
         <li>
-            {{ .GroupName }}
-            <button hx-put="/htmx/rename-group/{{ .GroupID }}" hx-prompt="Enter new name for {{ .GroupName }}">Rename</button>
-            <button hx-delete="/htmx/delete-group/{{ .GroupID }}" hx-confirm="Are you sure you want to delete {{ .GroupName }}?">Delete</button>
+            <div class="group-edit-item">
+                {{ .GroupName }}
+                <div class="edit-group-buttons">
+                    <button id="group-rename-btn" hx-put="/htmx/rename-group/{{ .GroupID }}" hx-prompt="Enter new name for {{ .GroupName }}"><i class="fa fa-edit"></i></button>
+                    <button id="group-delete-btn" hx-delete="/htmx/delete-group/{{ .GroupID }}" hx-confirm="Are you sure you want to delete {{ .GroupName }}?" hx-target="#modal-container"><i class="fa fa-trash"></i></button>
+                </div>
+            </div>
         </li>
         {{ end }}
     </ul>
-    <form hx-post="/htmx/create-group" hx-target=".group-list" hx-swap="beforeend">
-        <input type="text" name="group_name" placeholder="New group name" required>
-        <button type="submit">Create Group</button>
-    </form>
+    <button type="submit" hx-get="htmx/create-group-modal" hx-target="#modal-container">Create Group</button>
     <button hx-get="/htmx/close-modal" hx-target="#modal-container">Close</button>
 </div>

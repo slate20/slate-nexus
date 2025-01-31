@@ -1,0 +1,8 @@
+<div class="modal-content">
+    <h2>Create Group</h2>
+    <form hx-post="/htmx/create-group" hx-target="#model-container">
+        <input type="text" name="group_name" placeholder="New group name" required>
+        <button type="submit">Create Group</button>
+    </form>
+    <button type="submit" hx-get="/htmx/edit-groups-modal" hx-target="#modal-container">Cancel</button>
+</div>

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="./Device_Page/device_styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://unpkg.com/htmx.org@2.0.1"></script>
 </head>
 <body>
@@ -16,6 +17,7 @@
             <img src="./assets/logo.png" width="64px" height="64px" alt="Company-Logo">
         </div>
         <ul class="nav-links">
+            <li><a id="ticketsLink" href="/" target="_blank">Tickets</a></li>
             <li><a href="#" hx-get="./Device_Page/devices.html" hx-target="#main-content">Devices</a></li>
             <li><a id="remotelyLink" href="/" target="_blank">Remotely</a></li>
             <li><a href="#" hx-get="settings.html" hx-target="#main-content">Settings</a></li>
@@ -33,20 +35,24 @@
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var remotelyLink = document.getElementById('remotelyLink');
+        var links = document.querySelectorAll('#ticketsLink, #remotelyLink');
         var currentHost = window.location.hostname;
-        remotelyLink.href = 'https://remotely.' + currentHost;
+        links.forEach(function(link) {
+            switch (link.id) {
+                case 'ticketsLink':
+                    link.href = 'https://tickets.' + currentHost;
+                    break;
+                case 'remotelyLink':
+                    link.href = 'https://remotely.' + currentHost;
+                    break;
+            }
+        });
     });
-
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         if (evt.detail.target.id === 'modal-container') {
-            evt.detail.target.classList.add('show');
-        }
-    });
-
-    document.body.addEventListener('htmx:beforeSwap', function(evt) {
-        if (evt.detail.target.id === 'modal-container' && evt.detail.xhr.status === 200) {
-            evt.detail.target.classList.remove('show');
+            const triggers = evt.detail.xhr.getResponseHeader('HX-Trigger');
+            const triggerArray = triggers ? triggers.split(',') : [];
+            evt.detail.target.classList.toggle('show', !triggerArray.includes('closeModal'));
         }
     });
 </script>

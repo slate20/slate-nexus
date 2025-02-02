@@ -111,7 +111,12 @@ func AddDevicesToGroupModal(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddDevicesToGroup(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
 	groupID, err := strconv.Atoi(r.FormValue("group_id"))
 	if err != nil {
 		http.Error(w, "Invalid group ID", http.StatusBadRequest)
@@ -138,6 +143,73 @@ func AddDevicesToGroup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("HX-Trigger", "group-list-update")
-	w.WriteHeader(http.StatusOK)
+	// Call CloseModal
+	CloseModal(w, r)
+}
+
+func GetDevicesInGroup(w http.ResponseWriter, r *http.Request) {
+	// Extract the group ID from the URL
+	groupID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/htmx/group-devices/"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	// Call the GetHostsInGroup function from the database package
+	hosts, err := database.GetHostsInGroup(groupID)
+	if err != nil {
+		http.Error(w, "Failed to get devices in group", http.StatusInternalServerError)
+		log.Println("Failed to get devices in group:", err)
+		return
+	}
+
+	// Render the template
+	RenderTemplate(w, "device-list.html", hosts)
+}
+
+func RemoveDevicesFromGroup(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	// Extract the group ID from the request body
+	groupID, err := strconv.Atoi(r.FormValue("group_id"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	// Extract the device IDs from the request body
+	deviceIDs := strings.Split(r.FormValue("device_ids"), ",")
+	deviceIDsInt := make([]int, len(deviceIDs))
+	for i, deviceID := range deviceIDs {
+		id, err := strconv.Atoi(deviceID)
+		if err != nil {
+			http.Error(w, "Invalid device ID", http.StatusBadRequest)
+			return
+		}
+		deviceIDsInt[i] = id
+	}
+
+	for _, deviceID := range deviceIDsInt {
+		err := database.RemoveHostFromGroup(deviceID, groupID)
+		if err != nil {
+			http.Error(w, "Failed to remove device from group", http.StatusInternalServerError)
+			log.Println("Failed to remove device from group:", err)
+			return
+		}
+	}
+
+	// Return the updated list of device in the group
+	hosts, err := database.GetHostsInGroup(groupID)
+	if err != nil {
+		http.Error(w, "Failed to get devices in group", http.StatusInternalServerError)
+		log.Println("Failed to get devices in group:", err)
+		return
+	}
+
+	// Render the template
+	RenderTemplate(w, "device-list.html", hosts)
 }

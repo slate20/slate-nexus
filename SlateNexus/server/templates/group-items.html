@@ -1,8 +1,16 @@
 <ul>
     {{ range . }}
-        <li><a href="#">{{ .GroupName }}</a></li>
+        <li hx-get="/htmx/group-devices/{{ .GroupID }}"
+            hx-target="tbody"
+            hx-on::after-request="selectGroup(event, '{{ .GroupName }}')">
+            {{ .GroupName }}
+        </li>
     {{ else }}
         <li>No groups available.</li>
     {{ end }}
-    </ul>
-    
+</ul>
+<script>
+    function setCurrentGroup(groupID) {
+        document.body.setAttribute('data-current-group', groupID);
+    }    
+</script>

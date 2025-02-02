@@ -31,6 +31,8 @@ func NewHTMXGateway() *http.ServeMux {
 	router.HandleFunc("/htmx/remoterequest/{id}", handlers.GetRemoteControlURL)
 	router.HandleFunc("/htmx/add-to-group-modal", handlers.AddDevicesToGroupModal)
 	router.HandleFunc("/htmx/add-to-group", handlers.AddDevicesToGroup)
+	router.HandleFunc("/htmx/group-devices/{id}", handlers.GetDevicesInGroup)
+	router.HandleFunc("/htmx/remove-from-group", handlers.RemoveDevicesFromGroup)
 
 	return router
 }

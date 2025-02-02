@@ -7,7 +7,7 @@
             <option value="{{ .GroupID }}">{{ .GroupName }}</option>
             {{ end }}
         </select>
-        <input type="hidden" name="device_ids" value="{{ .SelectedDevices }}">
+        <input type="hidden" name="device_ids" value="{{ .selectedDevices }}">
         <button type="submit">Add</button>
         <button type="button" onclick="document.getElementById('modal-container').classList.remove('show')">Cancel</button>
     </form>

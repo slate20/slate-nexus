@@ -62,16 +62,26 @@
 }
 
 .group-items li {
+    cursor: pointer;
     margin-bottom: 10px;
+    transition: background-color 0.3s ease;
 }
 
-.group-items a {
+.group-items li.selected {
+    background-color: var(--primary-color-light);
+}
+
+.group-items li.selected:hover {
+    background-color: var(--primary-color-light);
+}
+
+.group-items li {
     text-decoration: none;
     color: #333;
     display: block;
 }
 
-.group-items a:hover {
+.group-items li:hover {
     background-color: #e0e0e0;
 }
 

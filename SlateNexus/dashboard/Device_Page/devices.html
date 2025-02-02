@@ -6,7 +6,7 @@
                 <div class="search-group">
                     <input type="text" placeholder="Search Groups" hx-post="/search-groups" hx-trigger="keyup changed delay:500ms" hx-target=".group-items">
                 </div>
-                <a href="#">View All</a>
+                <a href="#" hx-get="/htmx/get-devices" hx-target="tbody" hx-on::after-request="updateGroupHeader('')">View All</a>
                 <a href="#" hx-get="/htmx/edit-groups-modal" hx-target="#modal-container" hx-trigger="click">Edit Groups</a>
             </div>
             <div class="group-items">
@@ -16,14 +16,19 @@
 
         <!-- Main Content Area-->
          <div class="main-content">
-            <h2>Device List</h2>
+            <h2 id="device-list-header">Device List</h2>
             <div class="top-buttons">
                 <button id="add-to-group-btn"
                     hx-get="/htmx/add-to-group-modal"
                     hx-target="#modal-container"
-                    hx-vals="js:{selectedDevices: getSeletedDevices()}"
+                    hx-vals="js:{selectedDevices: getSelectedDevices()}"
                 >Add To Group</button>
-                <button>Remove From Group</button>
+                <button class="hidden"
+                    id="rmv-from-group-btn"
+                    hx-post="/htmx/remove-from-group"
+                    hx-target="tbody"
+                    hx-vals="js:{device_ids: getSelectedDevices(), group_id: getCurrentGroup()}"   
+                >Remove From Group</button>
                 <button>Run Command</button>
                 <button>Run Script</button>
                 <a href="/download/agent"><button class="add-agent">+ Add Agent</button></a>
@@ -32,7 +37,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="select all"></th>
+                            <th><input type="checkbox" id="select all" onclick="toggleAll(this)"></th>
                             <th>Device Name</th>
                             <th>Status</th>
                             <th>Type</th>
@@ -54,4 +59,53 @@
     <div id="modal-container" class="modal" hx-target="this">
         <!-- Modal content will be inserted here -->
     </div>
+    <script>
+        function getSelectedDevices() {
+            let selected = [];
+            document.querySelectorAll('.device-checkbox:checked').forEach((checkbox) => {
+                selected.push(checkbox.value);
+            });
+            return selected.join(',');
+        }
+
+        function getCurrentGroup() {
+            return document.body.getAttribute('data-current-group');
+        }
+
+        function toggleAll(source) {
+            document.querySelectorAll('.device-checkbox').forEach((checkbox) => {
+                checkbox.checked = source.checked;
+            });
+        }
+
+        function selectGroup(event, groupName) {
+            // Remove the 'selected' class from all groups
+            document.querySelectorAll('.group-items li').forEach((li) => li.classList.remove('selected'));
+
+            // Add the 'selected' class to the clicked group
+            event.target.classList.add('selected');
+            
+            // Update the header text
+            updateGroupHeader(groupName);
+        }
+
+        function updateGroupHeader(groupName) {
+            const header = document.getElementById('device-list-header');
+            const removeButton = document.getElementById('rmv-from-group-btn');
+
+            if (groupName) {
+                header.textContent = `Device List - ${groupName}`;
+                removeButton.classList.remove('hidden');
+            } else {
+                header.textContent = 'Device List';
+                removeButton.classList.add('hidden');
+            }
+        }
+
+        // Ensure header is updated and 'selected' class is removed when View All button is clicked
+        document.querySelector('.group-list-header a[hx-get="/htmx/get-devices"]').addEventListener('click', function() {
+            updateGroupHeader('');
+            document.querySelectorAll('.group-items li').forEach((li) => li.classList.remove('selected'));
+        })
+    </script>
 </div>

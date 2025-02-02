@@ -9,41 +9,28 @@
     <td>{{ .OS }}</td>
     <td>{{ (toLocalTime .LastSeen).Format "01/02/2006 3:04 PM" }}</td>
     <td>{{ .LastUser }}</td>
-<button hx-get="/htmx/remoterequest/{{ .ID }}"
-    hx-trigger="click"
-    hx-swap="none">
-    Remote
-</button>
+    <td><button hx-get="/htmx/remoterequest/{{ .ID }}"
+        hx-trigger="click"
+        hx-swap="none">
+        Remote
+    </button></td>
 </tr>
 {{ else }}
 <tr>
-    <td colspan="9">No devices found.</td>
+    <td colspan="10">No devices found.</td>
 </tr>
 {{ end }}
- 
 <script>
-    function getSelectedDevices() {
-        let selected = [];
-        document.querySelectorAll('.device-checkbox:checked').forEach((checkbox) => {
-            selected.push(checkbox.value);
-        });
-        return selected.join(',');
-    }
-
-    function toggleAll(source) {
-        document.querySelectorAll('.device-checkbox').forEach((checkbox) => {
-            checkbox.checked = source.checked;
-        });
-    }
-
+    var hasRequested = false;
     document.body.addEventListener('htmx:afterOnLoad', function(event) {
-        if (event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
+        if (!hasRequested && event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
             var response = JSON.parse(event.detail.xhr.responseText);
             if (response.url) {
                 window.open(response.url, '_blank', 'width=1600,height=900');
             } else {
                 alert('Failed to open remote control.');
             }
+            hasRequested = true;
         }
     });
 </script>

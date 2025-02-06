@@ -4,7 +4,7 @@
 
 # Function to generate a random string
 generate_random_string() {
-    openssl rand -base64 32
+    openssl rand -base64 32 | tr -d '/+='
 }
 
 # Create needed directories if they don't exist

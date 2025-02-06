@@ -157,3 +157,43 @@ server {
         proxy_http_version 1.1;
     }
 }
+
+# Zabbix server block
+server {
+    listen 443 ssl;
+    server_name zabbix.${NEXUS_FQDN};
+
+    ssl_certificate /etc/ssl/Nexus/cert.pem;
+    ssl_certificate_key /etc/ssl/Nexus/key.pem;
+
+    location / {
+        proxy_pass http://zabbix-web:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Support for PHP sessions
+        proxy_set_header Cookie $http_cookie;
+        proxy_buffering off;
+
+        # authentik-specific config
+        auth_request     /outpost.goauthentik.io/auth/nginx;
+        error_page       401 = @goauthentik_proxy_signin;
+        auth_request_set $auth_cookie $upstream_http_set_cookie;
+        add_header       Set-Cookie $auth_cookie;
+
+        # translate headers from the outposts back to the actual upstream
+        auth_request_set $authentik_username $upstream_http_x_authentik_username;
+        auth_request_set $authentik_groups $upstream_http_x_authentik_groups;
+        auth_request_set $authentik_email $upstream_http_x_authentik_email;
+        auth_request_set $authentik_name $upstream_http_x_authentik_name;
+        auth_request_set $authentik_uid $upstream_http_x_authentik_uid;
+
+        proxy_set_header X-authentik-username $authentik_username;
+        proxy_set_header X-authentik-groups $authentik_groups;
+        proxy_set_header X-authentik-email $authentik_email;
+        proxy_set_header X-authentik-name $authentik_name;
+        proxy_set_header X-authentik-uid $authentik_uid;
+    }
+}

@@ -2,7 +2,7 @@
     {{ range . }}
         <li hx-get="/htmx/group-devices/{{ .GroupID }}"
             hx-target="tbody"
-            hx-on::after-request="selectGroup(event, '{{ .GroupName }}')">
+            hx-on::after-request="selectGroup(event, '{{ .GroupName }}'), setCurrentGroup('{{ .GroupID }}')">
             {{ .GroupName }}
         </li>
     {{ else }}

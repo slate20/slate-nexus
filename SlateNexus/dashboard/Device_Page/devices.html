@@ -69,7 +69,7 @@
         }
 
         function getCurrentGroup() {
-            return document.body.getAttribute('data-current-group');
+            return document.body.getAttribute('data-current-group') || '';
         }
 
         function toggleAll(source) {

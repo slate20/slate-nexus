@@ -63,26 +63,25 @@
 
 .group-items li {
     cursor: pointer;
-    margin-bottom: 10px;
+    text-decoration: none;
+    color: #333;
+    display: block;
+    margin-bottom: 4px;
+    border-radius: 4px;
     transition: background-color 0.3s ease;
 }
 
+.group-items li:hover {
+    background-color: #e0e0e0;
+}
+
 .group-items li.selected {
+
     background-color: var(--primary-color-light);
 }
 
 .group-items li.selected:hover {
     background-color: var(--primary-color-light);
-}
-
-.group-items li {
-    text-decoration: none;
-    color: #333;
-    display: block;
-}
-
-.group-items li:hover {
-    background-color: #e0e0e0;
 }
 
 .group-items button {
@@ -227,6 +226,11 @@ tr:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 }
 
+.modal-content li:hover {
+    background-color: transparent;
+    cursor: default;
+}
+
 .modal.show {
     display: block;
 }
@@ -235,11 +239,9 @@ tr:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 80%;
     padding: 2px;
     border-bottom: 1px solid #ddd;
 }
-
 
 /* Edit Group Buttons */
 .edit-group-buttons {
@@ -262,6 +264,10 @@ tr:hover {
 
 .fa-edit:hover {
     color: var(--primary-color-dark);
+}
+
+.fa-trash:hover {
+    color: var(--danger-color);
 }
 
 .edit-group-buttons#group-delete-btn:hover {

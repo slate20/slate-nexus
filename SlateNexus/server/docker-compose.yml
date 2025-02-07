@@ -170,6 +170,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      nginx:
+        condition: service_started
 
 # REMOTELY ------------------------------------------------------------------
   remotely:
@@ -230,9 +232,9 @@ services:
     networks:
       - nexus_network
     expose:
-      - "${NGINX_PORT:-8080}"
+      - "${NGINX_PORT:-8081}"
     ports:
-      - "${NGINX_EXPOSE_PORT:-8080}:${NGINX_PORT:-8080}"
+      - "${NGINX_EXPOSE_PORT:-8081}:${NGINX_PORT:-8081}"
     depends_on:
       - zammad-railsserver
 

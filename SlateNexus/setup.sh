@@ -35,6 +35,9 @@ sudo apt install -y docker.io
 # Install Docker Compose
 sudo apt install -y docker-compose
 
+# install Zip
+sudo apt install -y zip
+
 # Restart Docker service
 sudo service docker restart
 

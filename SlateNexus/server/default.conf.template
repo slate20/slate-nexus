@@ -42,7 +42,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300;
-        proxy_pass http://zammad-nginx:8081; # Zammad Nginx proxy
+        proxy_pass http://zammad-nginx:8080; # Zammad Nginx proxy
         gzip on;
         gzip_types text/plain text/xml text/css image/svg+xml application/javascript application/json application/xml;
         gzip_proxied any;

@@ -139,3 +139,6 @@ cp ../dashboard/assets/logo.png ./media
 source .env
 echo "Configuring Authentik..."
 sudo ./authentik_config.sh
+
+echo "Setup complete!"
+echo "Log in to https://auth.${NEXUS_FQDN} with username akadmin and password ${AK_BT_PASS} to set up users and get started."

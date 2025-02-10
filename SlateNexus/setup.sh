@@ -14,8 +14,10 @@ sudo mkdir -p /etc/ssl/Nexus
 # Update the apt package list
 sudo apt update && sudo apt upgrade -y
 
-# Install zip
+# Install needed tools
 sudo apt install -y zip
+sudo apt install -y curl
+sudo apt install -y jq
 
 # Prompt for server FQDN
 read -p "Enter your FQDN for this server (e.g., nexus.example.com): " NEXUS_FQDN

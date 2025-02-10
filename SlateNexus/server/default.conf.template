@@ -7,7 +7,7 @@ server {
 # Remotely server block
 server {
     listen 443 ssl;
-    server_name ${REMOTELY_FQDN};
+    server_name remotely.${NEXUS_FQDN};
 
     ssl_certificate /etc/ssl/Nexus/cert.pem;
     ssl_certificate_key /etc/ssl/Nexus/key.pem;

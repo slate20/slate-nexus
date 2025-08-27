@@ -21,8 +21,11 @@ func main() {
 	}
 
 	// Initialize the database connection
-	dsn := "host=localhost user=" + os.Getenv("PG_USER") + " password=" + os.Getenv("PG_PASS") + " dbname=" + os.Getenv("PG_DB") + " sslmode=disable"
-	database.InitDB(dsn)
+	dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s port=5432 sslmode=disable TimeZone=UTC",
+		os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_DB"))
+	if err := database.InitDB(dsn); err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
 
 	// Create a new API router
 	apiRouter := NewGateway()

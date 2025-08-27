@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,9 +10,11 @@ import (
 	"path"
 	"regexp"
 	"slate-rmm/database"
+	"slate-rmm/models"
 	"strconv"
-	"strings"
+	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
 
@@ -44,7 +45,8 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	apiID := os.Getenv("REMOTELY_API_ID")
 
 	// get the RemotelyID using the host ID from the end of request URL
-	hostID := strings.TrimPrefix(r.URL.Path, "/htmx/remoterequest/")
+	vars := mux.Vars(r)
+	hostID := vars["id"]
 	if _, err := strconv.Atoi(hostID); err != nil || hostID == "" {
 		http.Error(w, "invalid host ID", http.StatusBadRequest)
 		return
@@ -96,7 +98,7 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(resp)
 
 	// Read the response body
-	body, err := io.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "could not read response body", http.StatusInternalServerError)
 		return
@@ -107,5 +109,54 @@ func GetRemoteControlURL(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("HX-Trigger", "remoterequest")
 
 	// Return the URL in a JSON object
-	json.NewEncoder(w).Encode(map[string]string{"url": string(body)})
+
+}
+
+// GetCommands returns a list of commands for a given agent
+func GetCommands(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement get commands
+}
+
+// QueueCommand queues a command to be executed on an agent
+func QueueCommand(w http.ResponseWriter, r *http.Request) {
+	//Get the agent ID from the request url
+	vars := mux.Vars(r)
+	hostID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid host ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse the form data and get the command string
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+	command := r.FormValue("command")
+
+	// Create the command object
+	cmd := &models.AgentCommand{
+		HostID:    hostID,
+		Command:   command,
+		Status:    "pending",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Save the command to the database
+	err = database.CreateCommand(cmd)
+	if err != nil {
+		http.Error(w, "Failed to save command", http.StatusInternalServerError)
+		return
+	}
+
+	// Send a succes response for now
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Command queued for agent %d", hostID)
+}
+
+// GetCommandResults returns the status of a command
+func GetCommandResults(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement get command results
 }

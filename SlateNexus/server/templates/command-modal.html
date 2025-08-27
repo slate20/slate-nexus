@@ -1,0 +1,19 @@
+<div id="command-modal" class="modal show">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Remote Command</h2>
+			<span class="close" hx-on:click="document.getElementById('command-modal').remove()&times;</span>
+		</div>
+        <div class=" modal-body">
+				<div id="terminal" class="terminal">
+					<div id="history"></div>
+					<div class="command-line">
+						<span>&gt;</span>
+						<input type="text" id="command-input" name="command" hx-post="/htmx/run-command/{{ .DeviceID }}"
+							hx-target="#history" hx-swap="beforeend" hx-trigger="keydown[key=='Enter']"
+							hx-on::after-request="this.value=''" />
+					</div>
+				</div>
+		</div>
+	</div>
+</div>

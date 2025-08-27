@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"slate-rmm/api_handlers"
 	"slate-rmm/handlers"
 )
 
@@ -19,7 +20,8 @@ func NewHTMXGateway() *http.ServeMux {
 		http.ServeFile(w, r, "../agent/NexusAgent_win.zip")
 	})
 
-	// HTMX routes
+	// --- HTMX routes ---
+	// Device and group routes
 	router.HandleFunc("/htmx/get-devices", handlers.GetDevices)
 	router.HandleFunc("/htmx/get-groups", handlers.GetGroups)
 	router.HandleFunc("/htmx/edit-groups-modal", handlers.EditGroupsModal)
@@ -33,6 +35,13 @@ func NewHTMXGateway() *http.ServeMux {
 	router.HandleFunc("/htmx/add-to-group", handlers.AddDevicesToGroup)
 	router.HandleFunc("/htmx/group-devices/{id}", handlers.GetDevicesInGroup)
 	router.HandleFunc("/htmx/remove-from-group", handlers.RemoveDevicesFromGroup)
+
+	// Agent command routes
+	router.HandleFunc("/htmx/get-commands/{id}", handlers.GetCommands)
+	router.HandleFunc("/htmx/queue-command/{id}", handlers.QueueCommand)
+	router.HandleFunc("/htmx/command-results/{id}", handlers.GetCommandResults)
+	router.HandleFunc("/htmx/command-modal/{id}", api_handlers.CommandModal)
+	router.HandleFunc("/htmx/run-command/{id}", api_handlers.RunCommand)
 
 	return router
 }

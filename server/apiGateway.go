@@ -40,6 +40,8 @@ func agentRoutes(router *mux.Router) {
 	router.HandleFunc("/{id}", api_handlers.UpdateAgent).Methods("PUT")
 	router.HandleFunc("/{id}", api_handlers.DeleteAgent).Methods("DELETE")
 	router.HandleFunc("/{id}/heartbeat", api_handlers.AgentHeartbeat).Methods("POST")
+	router.HandleFunc("/{id}/commands", api_handlers.GetCommand).Methods("GET")
+	router.HandleFunc("/{id}/commands/{command_id}", api_handlers.UpdateCommand).Methods("PUT")
 }
 
 // groupRoutes defines the routes for the group database microservice

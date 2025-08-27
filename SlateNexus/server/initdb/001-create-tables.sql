@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS agents (
     agent_version VARCHAR(50),
     last_seen TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_user VARCHAR(255),
-    remotely_id VARCHAR(255)
+    remotely_id Vnd ARCHAR(255)
 );
 
 -- Create the device_groups Table
@@ -34,4 +34,16 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL
+);
+
+--  Create the agent_commands table
+CREATE TABLE IF NOT EXISTS agent_commands (
+	id SERIAL PRIMARY KEY,
+	host_id INT NOT NULL,
+	command VARCHAR(255) NOT NULL,
+	status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	output TEXT,
+    FOREIGN KEY (host_id) REFERENCES agents(host_id)
 );

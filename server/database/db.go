@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"slate-rmm/models"
 	"time"
 
@@ -125,7 +126,9 @@ func GetPendingCommand(hostID int) (*models.AgentCommand, error) {
 	var command models.AgentCommand
 	err := db.Where("host_id = ? AND status = 'pending'", hostID).Order("created_at ASC").First(&command).Error
 	if err != nil {
-		// gorm.ErrRecordNotFound is expected if there are no pending commands
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &command, nil

@@ -90,7 +90,7 @@ func runAgent(stop <-chan struct{}) {
 				continue
 			}
 			// If there is a command, execute it
-			if command != nil {
+			if command != nil && command.ID != 0 {
 				logger.LogInfo("Executing command: %s", command.Command)
 				output, err := exec.ExecuteCommand(command.Command)
 				if err != nil {

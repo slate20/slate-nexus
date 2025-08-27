@@ -39,7 +39,7 @@ func NewHTMXGateway() *http.ServeMux {
 	// Agent command routes
 	router.HandleFunc("/htmx/get-commands/{id}", handlers.GetCommands)
 	router.HandleFunc("/htmx/queue-command/{id}", handlers.QueueCommand)
-	router.HandleFunc("/htmx/command-results/{id}", handlers.GetCommandResults)
+	router.HandleFunc("/htmx/command-results/{id}", api_handlers.GetCommandResults)
 	router.HandleFunc("/htmx/command-modal/{id}", api_handlers.CommandModal)
 	router.HandleFunc("/htmx/run-command/{id}", api_handlers.RunCommand)
 

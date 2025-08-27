@@ -70,9 +70,16 @@ func runAgent(stop <-chan struct{}) {
 	heartbeatTicker := time.NewTicker(1 * time.Minute)
 	defer heartbeatTicker.Stop()
 
-	// Check for commands every 10 seconds
-	commandTicker := time.NewTicker(10 * time.Second)
+	// Dynamic polling for commands
+	defaultInterval := 5 * time.Minute
+	fastInterval := 5 * time.Second
+	noCommandTimeout := 10 * time.Minute
+
+	currentInterval := defaultInterval
+	commandTicker := time.NewTicker(currentInterval)
 	defer commandTicker.Stop()
+
+	var noCommandSince time.Time = time.Now()
 
 	for {
 		select {
@@ -89,8 +96,17 @@ func runAgent(stop <-chan struct{}) {
 				logger.LogError("could not check for commands: %v", err)
 				continue
 			}
-			// If there is a command, execute it
+
 			if command != nil && command.ID != 0 {
+				// Command found
+				noCommandSince = time.Now()
+				if currentInterval != fastInterval {
+					logger.LogInfo("Command found, switching to fast polling interval.")
+					currentInterval = fastInterval
+					commandTicker.Reset(currentInterval)
+				}
+
+				// Execute command
 				logger.LogInfo("Executing command: %s", command.Command)
 				output, err := exec.ExecuteCommand(command.Command)
 				if err != nil {
@@ -105,6 +121,13 @@ func runAgent(stop <-chan struct{}) {
 				err = server.ReportCommandResult(command, config.ServerURL, config.APIKey)
 				if err != nil {
 					logger.LogError("could not report command result: %v", err)
+				}
+			} else {
+				// No command found
+				if currentInterval == fastInterval && time.Since(noCommandSince) > noCommandTimeout {
+					logger.LogInfo("No commands for 10 minutes, switching to default polling interval.")
+					currentInterval = defaultInterval
+					commandTicker.Reset(currentInterval)
 				}
 			}
 		case <-stop:

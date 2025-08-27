@@ -76,7 +76,8 @@ func CommandModal(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Opening command modal for Host ID:", hostID)
 
 	data := map[string]any{
-		"ID": hostID,
+		"ID":           hostID,
+		"SessionStart": time.Now().Unix(),
 	}
 	handlers.RenderTemplate(w, "command-modal.html", data)
 }
@@ -104,4 +105,33 @@ func RunCommand(w http.ResponseWriter, r *http.Request) {
 
 	// Return the command to be displayed in the history
 	fmt.Fprintf(w, "<div>&gt; %s</div>", commandStr)
+}
+
+// GetCommandResults returns the rendered HTML for the command history of a host
+func GetCommandResults(w http.ResponseWriter, r *http.Request) {
+	// Get the host ID from the URL
+	hostID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/htmx/command-results/"))
+	if err != nil {
+		http.Error(w, "Invalid host ID", http.StatusBadRequest)
+		return
+	}
+
+	sinceStr := r.URL.Query().Get("since")
+	var since int64
+	if sinceStr != "" {
+		since, _ = strconv.ParseInt(sinceStr, 10, 64)
+	}
+
+	commands, err := database.GetCommandResults(hostID, since)
+	if err != nil {
+		http.Error(w, "error getting command results", http.StatusInternalServerError)
+		return
+	}
+
+	for _, cmd := range commands {
+		fmt.Fprintf(w, "<div>&gt; %s</div>", cmd.Command)
+		if cmd.Status == "success" || cmd.Status == "failed" {
+			fmt.Fprintf(w, "<pre>%s</pre>", cmd.Output)
+		}
+	}
 }

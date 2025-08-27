@@ -138,3 +138,15 @@ func GetPendingCommand(hostID int) (*models.AgentCommand, error) {
 func UpdateCommand(command *models.AgentCommand) error {
 	return db.Save(command).Error
 }
+
+// GetCommandResults returns commands for a host, optionally filtered by a timestamp.
+func GetCommandResults(hostID int, since int64) ([]models.AgentCommand, error) {
+	var commands []models.AgentCommand
+	query := db.Where("host_id = ?", hostID)
+	if since > 0 {
+		sinceTime := time.Unix(since, 0)
+		query = query.Where("created_at > ?", sinceTime)
+	}
+	err := query.Order("created_at ASC").Find(&commands).Error
+	return commands, err
+}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"slate-nexus-agent/collectors"
+	"slate-nexus-agent/exec"
 	"slate-nexus-agent/logger"
 	"slate-nexus-agent/server"
 	"time"
@@ -66,16 +67,45 @@ func runAgent(stop <-chan struct{}) {
 	}
 
 	// Send a heartbeat every minute
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+	heartbeatTicker := time.NewTicker(1 * time.Minute)
+	defer heartbeatTicker.Stop()
+
+	// Check for commands every 10 seconds
+	commandTicker := time.NewTicker(10 * time.Second)
+	defer commandTicker.Stop()
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-heartbeatTicker.C:
 			if err := server.Heartbeat(config.HostID, config.ServerURL, config.APIKey); err != nil {
 				logger.LogError("could not send heartbeat: %v", err)
 			} else {
 				logger.LogInfo("Heartbeat sent successfully")
+			}
+		case <-commandTicker.C:
+			// Check for commands
+			command, err := server.CheckForCommands(config.HostID, config.ServerURL, config.APIKey)
+			if err != nil {
+				logger.LogError("could not check for commands: %v", err)
+				continue
+			}
+			// If there is a command, execute it
+			if command != nil {
+				logger.LogInfo("Executing command: %s", command.Command)
+				output, err := exec.ExecuteCommand(command.Command)
+				if err != nil {
+					logger.LogError("could not execute command: %v", err)
+					command.Status = "failed"
+					command.Output = output
+				} else {
+					command.Status = "success"
+					command.Output = output
+				}
+			}
+			// Report the result
+			err = server.ReportCommandResult(command, config.ServerURL, config.APIKey)
+			if err != nil {
+				logger.LogError("could not report command result: %v", err)
 			}
 		case <-stop:
 			logger.LogInfo("Agent stopping...")

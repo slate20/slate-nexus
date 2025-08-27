@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"slate-nexus-agent/collectors"
 	"slate-nexus-agent/logger"
+	"slate-nexus-agent/models"
 )
 
 // Register sends a POST request to the server to register the agent
@@ -101,6 +102,79 @@ func Heartbeat(hostID int32, ServerURL string, apiKey string) error {
 		return fmt.Errorf("unexpected status code: %s", resp.Status)
 	} else {
 		fmt.Println("Successful Heartbeat")
+	}
+
+	return nil
+}
+
+// CheckForCommands checks the server for pending commands for the agent
+func CheckForCommands(hostID int32, ServerURL string, apiKey string) (*models.AgentCommand, error) {
+	// Create the request
+	url := ServerURL + "/agents/" + fmt.Sprint(hostID) + "/commands"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode == http.StatusNoContent {
+		return nil, nil // No pending commands
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %s", resp.Status)
+	}
+
+	// Decode the response
+	var command models.AgentCommand
+	err = json.NewDecoder(resp.Body).Decode(&command)
+	if err != nil {
+		return nil, err
+	}
+
+	return &command, nil
+}
+
+// ReportCommandResult sends the result of a command to the server
+func ReportCommandResult(command *models.AgentCommand, ServerURL string, apiKey string) error {
+	// Marshal the command struct to JSON
+	data, err := json.Marshal(command)
+	if err != nil {
+		return err
+	}
+
+	// Create the request
+	url := ServerURL + "/agents/" + fmt.Sprint(command.HostID) + "/commands/" + fmt.Sprint(command.ID)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	// Set the headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %s", resp.Status)
 	}
 
 	return nil

@@ -101,7 +101,7 @@ func AddDevicesToGroupModal(w http.ResponseWriter, r *http.Request) {
 	//extract the selectedDevices from he request body
 	selectedDevices := r.URL.Query().Get("selectedDevices")
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Groups":          groups,
 		"selectedDevices": selectedDevices,
 	}

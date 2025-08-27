@@ -10,6 +10,7 @@ import (
 	"slate-rmm/handlers"
 	"slate-rmm/models"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -65,28 +66,26 @@ func UpdateCommand(w http.ResponseWriter, r *http.Request) {
 
 // CommandModal returns the HTML for the command modal
 func CommandModal(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hostID, err := strconv.Atoi(vars["id"])
+	// Get the host ID from the URL
+	hostID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/htmx/command-modal/"))
 	if err != nil {
 		http.Error(w, "Invalid host ID", http.StatusBadRequest)
 		return
 	}
+	// DEBUG: Print the host ID
+	fmt.Println("Opening command modal for Host ID:", hostID)
 
-	data := map[string]string{
-		"host_id": strconv.Itoa(hostID),
+	data := map[string]any{
+		"ID": hostID,
 	}
 	handlers.RenderTemplate(w, "command-modal.html", data)
 }
 
 // RunCommand makes an entry to the agent_commands table
 func RunCommand(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hostID, err := strconv.Atoi(vars["id"])
+	hostID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/htmx/run-command/"))
+
 	commandStr := r.FormValue("command")
-	if err != nil {
-		http.Error(w, "Invalid host ID", http.StatusBadRequest)
-		return
-	}
 
 	// Create the command in the database
 	command := &models.AgentCommand{

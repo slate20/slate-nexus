@@ -101,11 +101,11 @@ func runAgent(stop <-chan struct{}) {
 					command.Status = "success"
 					command.Output = output
 				}
-			}
-			// Report the result
-			err = server.ReportCommandResult(command, config.ServerURL, config.APIKey)
-			if err != nil {
-				logger.LogError("could not report command result: %v", err)
+				// Report the result
+				err = server.ReportCommandResult(command, config.ServerURL, config.APIKey)
+				if err != nil {
+					logger.LogError("could not report command result: %v", err)
+				}
 			}
 		case <-stop:
 			logger.LogInfo("Agent stopping...")

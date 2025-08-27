@@ -4,45 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"runtime"
 	"slate-nexus-agent/collectors"
+	"slate-nexus-agent/exec"
 	"slate-nexus-agent/logger"
 	"slate-nexus-agent/server"
 	"time"
-
-	"golang.org/x/sys/windows/svc"
 )
-
-type Service struct{}
-
-func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
-	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
-	changes <- svc.Status{State: svc.StartPending}
-	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-
-	stop := make(chan struct{})
-
-	go runAgent(stop)
-
-	for {
-		select {
-		case c := <-r:
-			switch c.Cmd {
-			case svc.Interrogate:
-				changes <- c.CurrentStatus
-			case svc.Stop, svc.Shutdown:
-				close(stop)
-				changes <- svc.Status{State: svc.StopPending}
-				return
-			default:
-				log.Printf("unexpected control request: #%d", c)
-			}
-		}
-	}
-}
 
 // Config represents the configuration for the agent
 type Config struct {
@@ -61,10 +31,7 @@ func main() {
 	logger.LogInfo("Starting SlateNexusAgent...")
 
 	// Run as a service
-	err = svc.Run("SlateNexusAgent", &Service{})
-	if err != nil {
-		logger.LogError("Service failed: %v", err)
-	}
+	runAsService()
 }
 
 func runAgent(stop <-chan struct{}) {
@@ -85,7 +52,7 @@ func runAgent(stop <-chan struct{}) {
 
 	// If HostID is 0, run agentSetup and reload config
 	if config.HostID == 0 {
-		configFile := "C:\\Program Files\\SlateNexus\\config.json"
+		configFile := getConfigPath()
 		err = agentSetup(config, configFile)
 		if err != nil {
 			logger.LogError("could not setup agent: %v", err)
@@ -100,16 +67,68 @@ func runAgent(stop <-chan struct{}) {
 	}
 
 	// Send a heartbeat every minute
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+	heartbeatTicker := time.NewTicker(1 * time.Minute)
+	defer heartbeatTicker.Stop()
+
+	// Dynamic polling for commands
+	defaultInterval := 5 * time.Minute
+	fastInterval := 5 * time.Second
+	noCommandTimeout := 10 * time.Minute
+
+	currentInterval := defaultInterval
+	commandTicker := time.NewTicker(currentInterval)
+	defer commandTicker.Stop()
+
+	var noCommandSince time.Time = time.Now()
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-heartbeatTicker.C:
 			if err := server.Heartbeat(config.HostID, config.ServerURL, config.APIKey); err != nil {
 				logger.LogError("could not send heartbeat: %v", err)
 			} else {
 				logger.LogInfo("Heartbeat sent successfully")
+			}
+		case <-commandTicker.C:
+			// Check for commands
+			command, err := server.CheckForCommands(config.HostID, config.ServerURL, config.APIKey)
+			if err != nil {
+				logger.LogError("could not check for commands: %v", err)
+				continue
+			}
+
+			if command != nil && command.ID != 0 {
+				// Command found
+				noCommandSince = time.Now()
+				if currentInterval != fastInterval {
+					logger.LogInfo("Command found, switching to fast polling interval.")
+					currentInterval = fastInterval
+					commandTicker.Reset(currentInterval)
+				}
+
+				// Execute command
+				logger.LogInfo("Executing command: %s", command.Command)
+				output, err := exec.ExecuteCommand(command.Command)
+				if err != nil {
+					logger.LogError("could not execute command: %v", err)
+					command.Status = "failed"
+					command.Output = output
+				} else {
+					command.Status = "success"
+					command.Output = output
+				}
+				// Report the result
+				err = server.ReportCommandResult(command, config.ServerURL, config.APIKey)
+				if err != nil {
+					logger.LogError("could not report command result: %v", err)
+				}
+			} else {
+				// No command found
+				if currentInterval == fastInterval && time.Since(noCommandSince) > noCommandTimeout {
+					logger.LogInfo("No commands for 10 minutes, switching to default polling interval.")
+					currentInterval = defaultInterval
+					commandTicker.Reset(currentInterval)
+				}
 			}
 		case <-stop:
 			logger.LogInfo("Agent stopping...")
@@ -122,7 +141,7 @@ func loadConfig() (Config, error) {
 	var config Config
 
 	// Define the path to the config file
-	configFile := "C:\\Program Files\\SlateNexus\\config.json"
+	configFile := getConfigPath()
 
 	// Read the config file
 	data, err := os.ReadFile(configFile)
@@ -179,24 +198,31 @@ func agentSetup(config Config, configPath string) error {
 	return nil
 }
 
-// downloadFile downloads a file from the given URL and saves it to the given path
-func downloadFile(url string, path string) error {
-	// Create the file
-	out, err := os.Create(path)
-	if err != nil {
-		return err
+func getConfigPath() string {
+	if runtime.GOOS == "windows" {
+		return "C:\\Program Files\\SlateNexus\\config.json"
 	}
-	defer out.Close()
-
-	// Get the data
-	// deepcode ignore Ssrf: Validation performed after user input
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Write the data to the file
-	_, err = io.Copy(out, resp.Body)
-	return err
+	return "/opt/SlateNexus/config.json"
 }
+
+// // downloadFile downloads a file from the given URL and saves it to the given path
+// func downloadFile(url string, path string) error {
+// 	// Create the file
+// 	out, err := os.Create(path)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer out.Close()
+
+// 	// Get the data
+// 	// deepcode ignore Ssrf: Validation performed after user input
+// 	resp, err := http.Get(url)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	// Write the data to the file
+// 	_, err = io.Copy(out, resp.Body)
+// 	return err
+// }

@@ -4,7 +4,7 @@
 
 # Function to generate a random string
 generate_random_string() {
-    openssl rand -base64 32
+    openssl rand -base64 32 | tr -d '/+='
 }
 
 # Create needed directories if they don't exist
@@ -14,8 +14,10 @@ sudo mkdir -p /etc/ssl/Nexus
 # Update the apt package list
 sudo apt update && sudo apt upgrade -y
 
-# Install zip
+# Install needed tools
 sudo apt install -y zip
+sudo apt install -y curl
+sudo apt install -y jq
 
 # Prompt for server FQDN
 read -p "Enter your FQDN for this server (e.g., nexus.example.com): " NEXUS_FQDN
@@ -34,6 +36,9 @@ sudo apt install -y docker.io
 
 # Install Docker Compose
 sudo apt install -y docker-compose
+
+# install Zip
+sudo apt install -y zip
 
 # Restart Docker service
 sudo service docker restart
@@ -136,3 +141,6 @@ cp ../dashboard/assets/logo.png ./media
 source .env
 echo "Configuring Authentik..."
 sudo ./authentik_config.sh
+
+echo "Setup complete!"
+echo "Log in to https://auth.${NEXUS_FQDN} with username akadmin and password ${AK_BT_PASS} to set up users and get started."

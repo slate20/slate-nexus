@@ -4,7 +4,7 @@ Our project aims to revolutionize IT management by consolidating a comprehensive
 
 ### Key Objectives:
 
-- **Integration of Open-Source Tools:** We seek to incorporate a variety of open-source tools with our core RMM application such as Netbox for network documentation and management, UVDesk for helpdesk and ticketing support, and CheckMK network monitoring, expanding its functionality to cover a wide range of IT management tasks.
+- **Integration of Open-Source Tools:** We seek to incorporate a variety of open-source tools with our core RMM application such as Netbox for network documentation and management, Zammad for helpdesk and ticketing support, and Zabbix for network monitoring, expanding its functionality to cover a wide range of IT management tasks.
 
 - **Modular Design Based on User Roles:** Our approach emphasizes modularity based on user roles, ensuring that users are presented with and have access to the relevant tools needed based on their assigned role. This granular access control optimizes user experience and enhances security.
 

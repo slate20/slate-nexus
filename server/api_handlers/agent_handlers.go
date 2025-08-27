@@ -8,6 +8,8 @@ import (
 	"slate-rmm/models"
 	"time"
 
+	"strconv"
+
 	"github.com/gorilla/mux"
 )
 
@@ -113,7 +115,15 @@ func UpdateAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.UpdateAgent(id, &updatedAgent)
+	// Convert id to int32 and set it on the updatedAgent
+	agentID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid agent ID", http.StatusBadRequest)
+		return
+	}
+	updatedAgent.ID = int32(agentID)
+
+	err = database.UpdateAgent(&updatedAgent)
 	if err != nil {
 		http.Error(w, "error updating agent", http.StatusInternalServerError)
 		return

@@ -1,35 +1,37 @@
 {{ range . }}
 <tr>
-    <td><input type="checkbox"></td>
-    <td>{{ .Hostname }}</td>
-    <td><span class="status {{ getStatusClass .LastSeen }}">{{ getStatusClass .LastSeen }}</span></td>
-    <td>Workstation</td>
-    <td>{{ .IPAddress }}</td>
-    <td>slatecapit.lan</td>
-    <td>{{ .OS }}</td>
-    <td>{{ (toLocalTime .LastSeen).Format "01/02/2006 3:04 PM" }}</td>
-    <td>{{ .LastUser }}</td>
-<button hx-get="/htmx/remoterequest/{{ .ID }}"
-    hx-trigger="click"
-    hx-swap="none">
-    Remote
-</button>
+	<td><input type="checkbox" class="device-checkbox" value="{{ .ID }}"></td>
+	<td>{{ .Hostname }}</td>
+	<td><span class="status {{ getStatusClass .LastSeen }}">{{ getStatusClass .LastSeen }}</span></td>
+	<td>Workstation</td>
+	<td>{{ .IPAddress }}</td>
+	<td>slatecapit.lan</td>
+	<td>{{ .OS }}</td>
+	<td>{{ (toLocalTime .LastSeen).Format "01/02/2006 3:04 PM" }}</td>
+	<td>{{ .LastUser }}</td>
+	<td><button hx-get="/htmx/remoterequest/{{ .ID }}" hx-trigger="click" hx-swap="none">
+			Remote
+		</button>
+		<button hx-get="/htmx/command-modal/{{ .ID }}" hx-target="#modal-container" hx-trigger="click">Run Command
+		</button>
+	</td>
 </tr>
 {{ else }}
 <tr>
-    <td colspan="9">No devices found.</td>
+	<td colspan="10">No devices found.</td>
 </tr>
 {{ end }}
- 
 <script>
-    document.body.addEventListener('htmx:afterOnLoad', function(event) {
-        if (event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
-            var response = JSON.parse(event.detail.xhr.responseText);
-            if (response.url) {
-                window.open(response.url, '_blank', 'width=1600,height=900');
-            } else {
-                alert('Failed to open remote control.');
-            }
-        }
-    });
+	var hasRequested = false;
+	document.body.addEventListener('htmx:afterOnLoad', function (event) {
+		if (!hasRequested && event.detail.xhr.getResponseHeader('HX-Trigger') === 'remoterequest') {
+			var response = JSON.parse(event.detail.xhr.responseText);
+			if (response.url) {
+				window.open(response.url, '_blank', 'width=1600,height=900');
+			} else {
+				alert('Failed to open remote control.');
+			}
+			hasRequested = true;
+		}
+	});
 </script>

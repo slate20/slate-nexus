@@ -1,0 +1,1 @@
+/home/mvenhaus/Nextcloud/Slate Nexus/Technical/Application/Remote Commands.md

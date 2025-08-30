@@ -208,8 +208,8 @@ create_windows_installer
 # Call the function to create the Linux installer script
 create_linux_installer
 
-# Zip the Install-Remotely.ps1 script with the slate-nexus-agent.exe and uninstall.bat
-zip -j ../agent/NexusAgent_win.zip ../agent/scripts/NexusAgent_Installer.ps1 ../agent/slate-nexus-agent.exe ../agent/scripts/uninstall.bat
+# Zip the Install-Remotely.ps1 script with the slate-nexus-agent.exe, uninstall.bat, and update_agent.ps1 script
+zip -j ../agent/NexusAgent_win.zip ../agent/scripts/NexusAgent_Installer.ps1 ../agent/slate-nexus-agent.exe ../agent/scripts/uninstall.bat ../agent/scripts/update_agent.ps1
 
 # tar the NexusAgent_Installer.sh script with the slate-nexus-agent executable
 tar -czf ../agent/NexusAgent_lin.tar.gz -C ../agent/scripts NexusAgent_Installer.sh slate-nexus-agent

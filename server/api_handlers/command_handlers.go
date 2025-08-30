@@ -67,16 +67,20 @@ func UpdateCommand(w http.ResponseWriter, r *http.Request) {
 // CommandModal returns the HTML for the command modal
 func CommandModal(w http.ResponseWriter, r *http.Request) {
 	// Get the host ID from the URL
-	hostID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/htmx/command-modal/"))
+	hostID := strings.TrimPrefix(r.URL.Path, "/htmx/command-modal/")
+
+	// Get the host from the database
+	host, err := database.GetAgent(hostID)
 	if err != nil {
-		http.Error(w, "Invalid host ID", http.StatusBadRequest)
+		http.Error(w, "error getting host", http.StatusInternalServerError)
 		return
 	}
+
 	// DEBUG: Print the host ID
 	fmt.Println("Opening command modal for Host ID:", hostID)
 
 	data := map[string]any{
-		"ID":           hostID,
+		"Host":         host,
 		"SessionStart": time.Now().Unix(),
 	}
 	handlers.RenderTemplate(w, "command-modal.html", data)
@@ -130,7 +134,9 @@ func GetCommandResults(w http.ResponseWriter, r *http.Request) {
 
 	for _, cmd := range commands {
 		fmt.Fprintf(w, "<div>&gt; %s</div>", cmd.Command)
-		if cmd.Status == "success" || cmd.Status == "failed" {
+		if cmd.Status == "failed" {
+			fmt.Fprint(w, "<pre>Failed to execute command</pre>")
+		} else {
 			fmt.Fprintf(w, "<pre>%s</pre>", cmd.Output)
 		}
 	}
